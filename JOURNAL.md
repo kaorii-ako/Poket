@@ -189,3 +189,23 @@ because I edited them on purpose.
 ![layers](images/pcb-layers.png)
 
 **Total time spent: 6 hours**
+
+# Sep 10: Fit check + wrap up
+
+Imported the KiCad board STEP into FreeCAD, shifted it +54 in Y to convert
+from KiCad's Y-down to the case coordinates, and booleaned it against both
+shells. Front shell: zero interference. Back shell: 1.9 mm³, which is the
+four support posts touching the underside of the board — that's what
+they're for, and it lines up with the ~0.04 mm soldermask film the export
+puts below z=0.
+
+Cutouts all land where they should: USB-C and the power slider on the
+bottom edge, jack on top, microSD out the left, encoder shaft and three
+buttons through the face, BOOT/RST as pinholes in the back.
+
+Shipped: gerbers + drill + pick-and-place + BOM in `fab/`, STEP and STL
+for all three printed parts in `enclosure/`.
+
+![assembled](images/case-assembly.png)
+
+**Total time spent: 1 hour**
