@@ -5,3 +5,5 @@ fp-info-cache
 ~*
 *.FCBak
 __pycache__/
+blender/frames/
+blender/preview_*.png
