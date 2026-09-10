@@ -16,7 +16,7 @@ coulomb-counting fuel gauge.
 | Charger | MCP73831, 500 mA, P-FET load share |
 | Fuel gauge | BQ27441-G1 with 10 mΩ sense resistor |
 | Rail | AP2112K-3.3, separate ferrite-isolated 3V3A for the audio |
-| Board | 80 × 54 mm, 4 layer (Sig / GND / GND / Sig) |
+| Board | 80 × 54 mm, 4 layer (Sig / solid GND / Sig / Sig) |
 | Case | 86 × 60 × 16.8 mm, 3D printed, two shells + slider cap |
 
 ## Repo layout

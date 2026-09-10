@@ -139,3 +139,53 @@ this box) to get pictures out without a GUI.
 ![inside back](images/case-back-inside.png)
 
 **Total time spent: 4 hours**
+
+# Sep 10: Routing. Four attempts.
+
+No autorouter installed and no way around hand-routing 150 nets, so I
+pulled freerouting. It needs a display — headless mode throws
+HeadlessException — so it runs on the real X display and just doesn't
+show a window worth looking at.
+
+**Pass 1.** Routed, imported, 91 unconnected. Almost all GND: my copper
+pours were sitting there unfilled. Filled them from a pcbnew script
+(`tools/fill_zones.py`), down to 30. Set pad connection to solid instead
+of thermal reliefs, added 284 stitching vias, down to 18.
+
+**Pass 2.** The stubborn ones were all on U6, the BQ27441 fuel gauge.
+Moved it somewhere less cramped and re-routed. Better, still 22 left, and
+still mostly U6.
+
+Then I worked out why. U6 is an SON-12 with 0.4 mm pad pitch. The DSN was
+telling freerouting to use 0.2 mm traces with 0.2 mm clearance — 0.4 mm
+of space needed per escape, into a 0.4 mm pitch. **It was geometrically
+impossible and the router had been quietly giving up on it for two
+passes.** Same story on the PAM8908's QFN.
+
+**Pass 3.** Dropped clearance to 0.15 mm (JLC does 0.127), re-routed —
+auto-routing finished in ten seconds instead of four minutes. Every
+component-level net connected. 0 clearance errors after I remembered to
+also set the netclass clearance in the .kicad_pro, since DRC reads that
+and not the number I'd set through the MCP.
+
+**Pass 4.** Noticed the router had put 439 mm of signal on In1.Cu, which
+defeats the whole point of having a ground plane there. Marked In1.Cu as
+`(type power)` in the DSN and ran it again. In1.Cu is now completely
+clean — solid ground directly under every trace on the component side.
+
+Left over: a handful of pour islands with a GND pad in them and no room
+for a 0.5 mm via. Wrote `tools/tie_islands.py` to find each orphan island
+and brute-force a spot for a via inside it using real point-to-segment
+distance instead of bounding boxes (bounding boxes on diagonal traces
+block half the board). Dropped to 0.4 mm vias for the last three.
+
+Final: 741 tracks, 229 vias, 2.4 m of copper.
+**0 DRC errors, 0 unconnected, 0 schematic parity.** Six warnings left,
+all library bookkeeping — the mounting hole footprint name isn't in the
+stock library, and two footprints differ from their library copies
+because I edited them on purpose.
+
+![pcb](images/pcb-3d-top.png)
+![layers](images/pcb-layers.png)
+
+**Total time spent: 6 hours**

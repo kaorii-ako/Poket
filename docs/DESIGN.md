@@ -90,9 +90,15 @@ pull-ups on CMD and all four data lines; card detect on the socket's
 detect switch.
 
 ### Board stackup — 4 layer
-Sig / GND / GND / Sig. Two solid ground planes is overkill for a
-1 MHz-ish design, but it makes the I2S and SDIO returns trivial, keeps
-the analog section quiet, and costs almost nothing at JLC in this size.
+Signal / **solid GND** / signal+GND pour / signal+GND pour.
+
+The first autorouting pass came back with 439 mm of signal trace sitting
+on In1.Cu, which shreds exactly the plane I added the layer for. Second
+pass I marked In1.Cu as `(type power)` in the Specctra DSN so the router
+would not touch it — it now carries no signal copper at all, so every
+trace on the component side has an uninterrupted return path directly
+underneath it. In2.Cu and B.Cu carry the rest of the routing with ground
+poured around them.
 
 ### The ESP32 antenna keepout
 KiCad's `ESP32-S3-WROOM-1` footprint carries a 48 × 21 mm copper keepout
