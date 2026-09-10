@@ -279,3 +279,47 @@ ffmpeg stitches it outside.
 ![assembled](images/anim-assembled.png)
 
 **Total time spent: 3 hours**
+
+# Sep 10: Squared the edges, promo film, BOM
+
+**Edges.** Swapped every fillet on the enclosure for a 45° chamfer — 1.2 mm on
+the four outer vertical corners, 0.8 mm on the top and bottom rims. Straight
+bevels, no curves anywhere you can see. Internal features (cavity, lip, rebate)
+are just square now; nobody looks at them and square corners make the booleans
+behave. Side effect I didn't expect: the STL dropped from 18.8k triangles to
+3.8k, because there are no curved surfaces left to tessellate.
+
+Re-ran the interference check against the board — still 0.0000 mm³ everywhere.
+
+**Promo.** 22 seconds, five shots cut with camera-bound timeline markers: low
+hero orbit, exploded build, top-down push-in, a low pass across the port side,
+then a turntable. Added an emissive plane behind the display window so the
+screen is lit — it goes dark when the board is out and comes back when the lid
+lands, which sells the cut better than I expected.
+
+Titles are done in ffmpeg with drawtext rather than in Blender, because this
+Blender has no ffmpeg writer anyway so everything goes through a PNG sequence.
+
+Two framing fixes: the floor plane's far edge was drawing a horizon line across
+the wide shots (floor is 6× bigger now), and the low side camera was seeing the
+emissive screen plane edge-on so it looked dead (raised the camera).
+
+**Lost the .blend** partway through — deleted by accident. Cost nothing, because
+`build_scene.py` rebuilds the whole scene from the STLs and the two board
+renders. Folded the promo setup into the same script with a `MODE` switch so
+there's exactly one file to keep.
+
+**BOM.** 98 parts, 41 line items, ≈$46 for one unit — $24 of that electronics,
+$22 PCB and hardware. Deliberately left the supplier part-number column empty:
+I'm not confident enough in specific LCSC `C` numbers to write them down, and a
+wrong one means the wrong part arrives. MPNs are real, prices are labelled as
+estimates.
+
+Also wrote an assembly guide and an honest submission checklist. Short version:
+the design is done and manufacturable, but nothing has been built and there's no
+firmware, so I'm not going to claim it works.
+
+![promo](images/promo-hero.png)
+![face](images/promo-face.png)
+
+**Total time spent: 4 hours**
