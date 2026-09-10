@@ -1,0 +1,26 @@
+Gtk-Message: 10:56:35.818: Failed to load module "canberra-gtk-module"
+Gtk-Message: 10:56:35.818: Failed to load module "canberra-gtk-module"
+2026-09-10 10:56:35.904 [main] INFO  Freerouting v1.9.0 (build-date: 2023-10-30)
+WARNING: Final field user_id in class app.freerouting.gui.StartupOptions has been mutated reflectively by class com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1 in unnamed module @6eceb130 (file:/var/home/hxshino/.kicad-mcp/fr19.jar)
+WARNING: Use --enable-final-field-mutation=ALL-UNNAMED to avoid a warning
+WARNING: Mutating final fields will be blocked in a future release unless final field mutation is enabled
+2026-09-10 10:56:35.948 [main] INFO  Settings were loaded from freerouting.json
+2026-09-10 10:56:36.957 [main] INFO  Opening 'poket.dsn'...
+java.util.concurrent.CompletionException: java.lang.NullPointerException: Cannot invoke "com.google.gson.JsonElement.getAsString()" because the return value of "com.google.gson.JsonObject.get(String)" is null
+	at java.base/java.util.concurrent.CompletableFuture.wrapInCompletionException(CompletableFuture.java:323)
+	at java.base/java.util.concurrent.CompletableFuture.encodeThrowable(CompletableFuture.java:359)
+	at java.base/java.util.concurrent.CompletableFuture.completeThrowable(CompletableFuture.java:364)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:743)
+	at java.base/java.util.concurrent.CompletableFuture.postComplete(CompletableFuture.java:531)
+	at java.base/java.util.concurrent.CompletableFuture.postFire(CompletableFuture.java:635)
+	at java.base/java.util.concurrent.CompletableFuture$UniWhenComplete.tryFire(CompletableFuture.java:865)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.exec(CompletableFuture.java:504)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:511)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1450)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2019)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)
+Caused by: java.lang.NullPointerException: Cannot invoke "com.google.gson.JsonElement.getAsString()" because the return value of "com.google.gson.JsonObject.get(String)" is null
+	at app.freerouting.management.VersionChecker.processResponse(VersionChecker.java:39)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:739)
+	... 8 more
+2026-09-10 10:56:40.591 [Thread-29] INFO  Starting auto-routing...
