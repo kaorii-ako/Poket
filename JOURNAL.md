@@ -74,3 +74,68 @@ on C. On the KiCad symbol C is the common. Swapped.
 ![schematic](images/schematic.png)
 
 **Total time spent: 4 hours**
+
+# Sep 10: PCB placement, and a fight with the ESP32 footprint
+
+Board is 80 x 54 mm, 4 layers (sig / GND / GND / sig). Went 4-layer because
+I wanted solid ground under the DAC and the SDIO bus, and JLC 4-layer is
+barely more than 2.
+
+Placement logic: front face is what you look at, so screen + buttons +
+knob live on top. microSD went on the BOTTOM of the board so the slot
+lines up with the left wall and the top side isn't eaten by a 15mm socket.
+BOOT and RESET also went to the bottom — pinholes in the back shell
+instead of ugly holes in the face.
+
+Two things ate a lot of time:
+
+**The ESP32-S3-WROOM-1 footprint has a giant antenna keepout zone baked
+in** — 48 x 21mm, and it's a real copper keepout, not just a drawing. Its
+courtyard outline is the same shape, so every part within 24mm of the
+module "overlapped" it and DRC would have screamed. Deleted the zone from
+the board instance and replaced the courtyard with a plain rectangle
+around the module body, then shaped my own ground pours to leave a
+52-74mm x 0-9.5mm notch open under the antenna. Same intent, sane size.
+
+**I nuked the wrong zone the first time.** My paren-matcher found
+`(zone_connect 2)` inside a pad before it found the actual `(zone ...)`
+block and deleted that instead. Then on the second try I ate a keepout
+belonging to the microSD footprint. Restored from backup twice. Third
+attempt matched on `\n\t\t(zone\n` and checked the polygon coords before
+deleting. Lesson: assert on something unique before you delete.
+
+Also got bitten by 3.0mm pitch on 0603 rows — the courtyard is 3.05mm
+wide, so a 3.0 pitch is a 0.05mm overlap. Everything is on 3.5 now.
+
+**Total time spent: 5 hours**
+
+# Sep 10: Enclosure
+
+FreeCAD's RPC wasn't answering so I gave up on the GUI and scripted the
+whole thing headless with FreeCADCmd. Actually nicer — the case is a
+parametric script, so when the board moves the case follows.
+
+86 x 60 x 16.8mm, two shells + a little slider cap, split just above the
+PCB. Front shell has the display window, 3 button holes, the encoder shaft
+hole, two LED pinholes, the power-slider slot, and a set of debossed vent
+slots top-right that do nothing except make it look like it does something.
+Back shell is a tray: 4 posts hold the PCB, ribs pen the battery in, M2
+screws come in from the back into heat-set inserts in the front bosses.
+
+Two geometry bugs:
+- The registration lip came out as a separate floating solid. It was
+  sitting in mid-air below the front wall — the wall only starts at the
+  split plane, so a lip hanging below it touches nothing. Fixed by making
+  the lip overlap 1mm up into the wall so there's actual volume overlap,
+  not just coincident faces.
+- The slider cap was 3mm too short to reach through the front face. Only
+  spotted it in the render.
+
+Wrote a tiny pure-Python STL renderer (painter's algorithm, no numpy on
+this box) to get pictures out without a GUI.
+
+![front](images/case-front-iso.png)
+![assembled](images/case-assembly.png)
+![inside back](images/case-back-inside.png)
+
+**Total time spent: 4 hours**
