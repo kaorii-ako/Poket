@@ -19,6 +19,20 @@ coulomb-counting fuel gauge.
 | Board | 80 × 54 mm, 4 layer (Sig / solid GND / Sig / Sig) |
 | Case | 86 × 60 × 16.8 mm, 3D printed, two shells + slider cap |
 
+## Assembly animation
+
+`video/poket-assembly.mp4` — parts drop into place, then a turntable.
+Rebuild the scene with `blender/build_scene.py` (run it inside Blender),
+render the PNG sequence, then:
+
+```
+ffmpeg -framerate 30 -i blender/frames/f_%04d.png \
+       -c:v libx264 -pix_fmt yuv420p -crf 18 -preset slow \
+       video/poket-assembly.mp4
+```
+
+![assembly](video/poket-assembly.gif)
+
 ## Repo layout
 
 ```
@@ -29,6 +43,8 @@ enclosure/*.step, *.stl                     exported case parts
 docs/                                       schematic PDF, BOM, design notes
 fab/                                        gerbers, drill, pick-and-place
 images/                                     renders and screenshots
+blender/                                    animation scene + board textures
+video/                                      rendered assembly animation
 JOURNAL.md                                  build log
 ```
 

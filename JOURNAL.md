@@ -243,3 +243,39 @@ export put below z=0.
 ![board in the tray](images/case-back-inside.png)
 
 **Total time spent: 2 hours**
+
+# Sep 10: Assembly animation in Blender
+
+Wanted a clip that shows how the thing goes together, so: pulled the three
+printed parts and the board into Blender as STLs, dropped them in from
+above one at a time, then a full turntable. 194 frames, 1280x720, 30fps,
+6.5 seconds.
+
+The board is not modelled — KiCad's 3D model packages aren't installed on
+this box, so the STEP export is a bare slab. Instead I rendered the board
+orthographically from top and bottom with a transparent background, found
+the board's silhouette in the alpha channel with numpy to get the exact
+crop, and projected those two images onto the slab in object space,
+picking top vs bottom by the sign of the surface normal. Traces, gold
+pads and the silkscreen all read properly, and you can see the board
+through the display window once the lid is on.
+
+Three things went wrong:
+
+- **Everything rendered pure white.** I'd copied light energies out of
+  habit — 130 W area lights, 25 cm from an 8 cm object. Nine watts is
+  about right at this scale.
+- **Blotchy triangular shading on flat faces.** `shade_smooth_by_angle`
+  needs the objects *selected*, not just active. I'd only set the active
+  object, so it silently did nothing and the STL triangles showed through.
+- **Blender lost the whole scene** partway through, so I rebuilt it as one
+  script and saved the .blend. `blender/build_scene.py` rebuilds it from
+  nothing.
+
+Also: this Blender has no ffmpeg writer, so it renders a PNG sequence and
+ffmpeg stitches it outside.
+
+![exploded](images/anim-exploded.png)
+![assembled](images/anim-assembled.png)
+
+**Total time spent: 3 hours**
