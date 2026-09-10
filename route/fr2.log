@@ -1,11 +1,11 @@
-Gtk-Message: 10:56:35.818: Failed to load module "canberra-gtk-module"
-Gtk-Message: 10:56:35.818: Failed to load module "canberra-gtk-module"
-2026-09-10 10:56:35.904 [main] INFO  Freerouting v1.9.0 (build-date: 2023-10-30)
+Gtk-Message: 11:02:48.064: Failed to load module "canberra-gtk-module"
+Gtk-Message: 11:02:48.065: Failed to load module "canberra-gtk-module"
+2026-09-10 11:02:48.155 [main] INFO  Freerouting v1.9.0 (build-date: 2023-10-30)
 WARNING: Final field user_id in class app.freerouting.gui.StartupOptions has been mutated reflectively by class com.google.gson.internal.bind.ReflectiveTypeAdapterFactory$1 in unnamed module @6eceb130 (file:/var/home/hxshino/.kicad-mcp/fr19.jar)
 WARNING: Use --enable-final-field-mutation=ALL-UNNAMED to avoid a warning
 WARNING: Mutating final fields will be blocked in a future release unless final field mutation is enabled
-2026-09-10 10:56:35.948 [main] INFO  Settings were loaded from freerouting.json
-2026-09-10 10:56:36.957 [main] INFO  Opening 'poket.dsn'...
+2026-09-10 11:02:48.197 [main] INFO  Settings were loaded from freerouting.json
+2026-09-10 11:02:49.207 [main] INFO  Opening 'poket2.dsn'...
 java.util.concurrent.CompletionException: java.lang.NullPointerException: Cannot invoke "com.google.gson.JsonElement.getAsString()" because the return value of "com.google.gson.JsonObject.get(String)" is null
 	at java.base/java.util.concurrent.CompletableFuture.wrapInCompletionException(CompletableFuture.java:323)
 	at java.base/java.util.concurrent.CompletableFuture.encodeThrowable(CompletableFuture.java:359)
@@ -23,8 +23,8 @@ Caused by: java.lang.NullPointerException: Cannot invoke "com.google.gson.JsonEl
 	at app.freerouting.management.VersionChecker.processResponse(VersionChecker.java:39)
 	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:739)
 	... 8 more
-2026-09-10 10:56:40.591 [Thread-29] INFO  Starting auto-routing...
-2026-09-10 10:58:33.394 [Thread-29] INFO  Auto-routing was completed in 1 minute(s) 52.80 seconds.
-2026-09-10 10:58:33.495 [Thread-29] INFO  Starting route optimization on 1 thread...
-2026-09-10 10:58:48.940 [Thread-29] INFO  Route optimization was completed in 15.44 seconds and it improved the design by ~50.73%.
-2026-09-10 10:58:48.956 [Thread-29] INFO  Saving 'poket.ses'...
+2026-09-10 11:02:53.178 [Thread-28] INFO  Starting auto-routing...
+2026-09-10 11:06:53.258 [Thread-28] INFO  Auto-routing was completed in 4 minute(s) 0.08 seconds.
+2026-09-10 11:06:53.360 [Thread-28] INFO  Starting route optimization on 1 thread...
+2026-09-10 11:07:08.498 [Thread-28] INFO  Route optimization was completed in 15.14 seconds and it improved the design by ~50.78%.
+2026-09-10 11:07:08.514 [Thread-28] INFO  Saving 'poket2.ses'...
