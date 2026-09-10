@@ -7,3 +7,4 @@ fp-info-cache
 __pycache__/
 blender/frames/
 blender/preview_*.png
+blender/promo/
