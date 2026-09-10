@@ -209,3 +209,37 @@ for all three printed parts in `enclosure/`.
 ![assembled](images/case-assembly.png)
 
 **Total time spent: 1 hour**
+
+# Sep 10: Rebuilt the case in FreeCAD proper
+
+The FreeCAD RPC came back up, so I threw away the headless workaround and
+rebuilt the enclosure through the real GUI session. Same parametric
+approach, but now I can actually look at it, and the KiCad board STEP is
+loaded into the same document so the fit check is live instead of a
+number in a terminal.
+
+Immediately worth it — **the slider cap was four loose pieces.** The three
+thumb grooves were cutting the full width of the part, so each one sliced
+it clean through. The headless script only ever printed solid counts for
+the two shells, so it slid past me and went straight into an STL I would
+have printed. Grooves now bite in 0.8 mm from each long side and leave a
+1.6 mm core. One solid.
+
+Also fixed while I was in there:
+- assembly STEP no longer bundles the board, and I re-exported the board
+  STEP without tracks and zones — 12.5 MB down to 136 KB
+- STLs meshed at 0.02 mm linear deflection instead of the default, so the
+  fillets actually look like fillets (back shell 18.8k triangles)
+- deleted my hand-rolled STL renderer, `cad/stlrender.py`. It existed
+  purely because there was no GUI to screenshot. There is now.
+
+Interference check with the lighter board model: **0.0000 mm³ everywhere**
+— shells against each other, shells against the board, cap against the
+front shell. The 1.9 mm³ I saw before was the soldermask film the old
+export put below z=0.
+
+![assembled](images/case-assembly.png)
+![front shell inside](images/case-front-inside.png)
+![board in the tray](images/case-back-inside.png)
+
+**Total time spent: 2 hours**

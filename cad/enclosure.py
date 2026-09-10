@@ -136,8 +136,12 @@ for c in cuts_front:
 CAP_Z0, CAP_Z1 = 2.6, Z_TOP_OUT + 0.8
 cap = rbox(-3.0, -1.5, CAP_Z0, 6.0, 3.0, CAP_Z1 - CAP_Z0, 0.8)
 cap = cap.cut(rbox(-1.3, -0.8, CAP_Z0 - 0.1, 2.6, 1.6, 3.1))          # actuator pocket
-for i in range(3):                                                      # thumb grooves
-    cap = cap.cut(rbox(-3.2, -1.6, CAP_Z1 - 1.9 + i * 0.6, 6.4, 3.2, 0.3))
+# thumb grooves bite in from both long sides only - cutting straight through
+# would slice the cap into four loose pieces
+for i in range(3):
+    z = CAP_Z1 - 1.9 + i * 0.6
+    cap = cap.cut(rbox(-3.2, -1.6, z, 6.4, 0.8, 0.3))
+    cap = cap.cut(rbox(-3.2,  0.8, z, 6.4, 0.8, 0.3))
 cap.translate(Vector(24.0, 3.5, 0.0))
 
 # ---------------- PCB stand-in (reference only) ----------------
@@ -154,15 +158,18 @@ g = {o.Name: o for o in doc.Objects}
 Part.export([g["BackShell"]],  os.path.join(OUT, "poket-back-shell.step"))
 Part.export([g["FrontShell"]], os.path.join(OUT, "poket-front-shell.step"))
 Part.export([g["SliderCap"]],  os.path.join(OUT, "poket-slider-cap.step"))
-Part.export([g["BackShell"], g["FrontShell"], g["SliderCap"], g["PCB_ref"]],
+Part.export([g["BackShell"], g["FrontShell"], g["SliderCap"]],
             os.path.join(OUT, "poket-enclosure-assembly.step"))
-import Mesh
+import MeshPart
 for n, f in (("BackShell", "poket-back-shell.stl"), ("FrontShell", "poket-front-shell.stl"),
              ("SliderCap", "poket-slider-cap.stl")):
-    Mesh.export([g[n]], os.path.join(OUT, f))
+    m = MeshPart.meshFromShape(Shape=g[n].Shape, LinearDeflection=0.02,
+                               AngularDeflection=0.2, Relative=False)
+    m.write(os.path.join(OUT, f))
 
 doc.saveAs("/var/home/hxshino/projects/Poket/cad/poket-enclosure.FCStd")
 print("VOL back=%.1f front=%.1f cap=%.2f" % (back.Volume/1000, front.Volume/1000, cap.Volume/1000))
 print("BBOX", back.BoundBox)
-print("SOLIDS back=%d front=%d valid=%s/%s" % (len(back.Solids), len(front.Solids), back.isValid(), front.isValid()))
+for n, sh in (("back", back), ("front", front), ("cap", cap)):
+    print("%-6s solids=%d valid=%s" % (n, len(sh.Solids), sh.isValid()))
 print("DONE")

@@ -3,3 +3,5 @@
 fp-info-cache
 *.kicad_prl
 ~*
+*.FCBak
+__pycache__/
