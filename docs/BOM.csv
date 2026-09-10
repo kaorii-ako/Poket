@@ -1,0 +1,42 @@
+Section,Ref,Qty,Value,MPN,Package,Description,Est unit USD,Est ext USD
+MCU,U1,1,ESP32-S3-WROOM-1-N16R8,ESP32-S3-WROOM-1-N16R8,SMD module,Dual-core MCU + BT/WiFi radio 16MB flash 8MB octal PSRAM,4.50,4.50
+Audio,U4,1,PCM5102A,PCM5102APWR,TSSOP-20,I2S stereo DAC internal PLL no MCLK needed,2.20,2.20
+Audio,U5,1,PAM8908,PAM8908JER,QFN-16 3x3 EP,Stereo headphone amp charge-pump ground-centred output,0.60,0.60
+Audio,J3,1,3.5mm TRS,SJ1-3535NG,THT horizontal,3.5mm stereo jack with switched tip for plug detect,0.60,0.60
+Power,U2,1,MCP73831-2-OT,MCP73831T-2ACI/OT,SOT-23-5,Single-cell LiPo charger 500mA set by R3,0.65,0.65
+Power,U3,1,AP2112K-3.3,AP2112K-3.3TRG1,SOT-23-5,3.3V 600mA LDO with enable,0.20,0.20
+Power,U6,1,BQ27441-G1,BQ27441DRZR-G1A,SON-12 2x4mm,Coulomb-counting fuel gauge I2C,2.80,2.80
+Power,Q1,1,DMG2301L,DMG2301L,SOT-23,P-channel MOSFET load-share switch,0.20,0.20
+Power,D3,1,B5819W,B5819WS,SOD-123,Schottky diode USB-to-VSYS path,0.05,0.05
+Power,U7,1,USBLC6-2SC6,USBLC6-2SC6,SOT-23-6,USB ESD protection array,0.25,0.25
+Storage,J2,1,microSD,DM3AT-SF-PEJM5,SMD push-push,microSD socket with card-detect switch,1.00,1.00
+UI,SW1,1,EC11E,EC11E15244A3,THT vertical H20mm,Rotary encoder with push switch,0.45,0.45
+UI,SW2-SW4,3,Tact 6x6x5,TS-1187A-B-A-B,SMD 6x6x5mm,Transport buttons prev/play/next,0.10,0.30
+UI,SW5-SW6,2,Tact 3.9x2.9,B3U-1000P,SMD,BOOT and RESET on the underside,0.15,0.30
+UI,SW7,1,Slide SPDT,PCM12SMTR,SMD,Power slide switch drives the LDO enable,0.30,0.30
+UI,D1,1,WS2812B-2020,WS2812B-2020,PLCC-4 2x2mm,Addressable RGB status LED,0.15,0.15
+UI,D2,1,LED green,KT-0603G,0603,Charge status LED,0.03,0.03
+Connectors,J1,1,USB-C,HC-TYPE-C-16P-01A,SMD 16P,USB-C receptacle USB 2.0,0.30,0.30
+Connectors,J5,1,JST-PH 2pin,S2B-PH-SM4-TB,SMD horizontal,Battery connector,0.15,0.15
+Connectors,J4,1,Header 1x4,Generic 2.54mm,THT,OLED module connection,0.05,0.05
+Connectors,J6,1,Header 1x4,Generic 2.54mm,THT,UART debug header,0.05,0.05
+Passives,FB1,1,600R@100MHz,Generic 0603,0603,Ferrite bead isolating the 3V3A analog rail,0.03,0.03
+Passives,C1;C3-C5;C7;C9;C13;C16;C25,9,10uF,Generic X5R 0805 16V,0805,Bulk decoupling,0.03,0.27
+Passives,C2;C6;C8;C10;C12;C14;C15;C26-C29,11,100nF,Generic X7R 0603 25V,0603,Bypass,0.01,0.11
+Passives,C11;C18-C24,8,1uF,Generic X7R 0603 16V,0603,Charge-pump and coupling caps,0.02,0.16
+Passives,C17,1,2.2uF,Generic X7R 0603 16V,0603,DAC charge-pump flying cap,0.02,0.02
+Passives,C30;C31,2,10nF,Generic X7R 0603 50V,0603,Encoder RC filter,0.01,0.02
+Passives,R1;R2,2,5.1k,Generic 0603 1%,0603,USB-C CC pulldowns,0.01,0.02
+Passives,R3,1,2k,Generic 0603 1%,0603,Charge current program 500mA,0.01,0.01
+Passives,R4;R23,2,1k,Generic 0603 1%,0603,LED series and fuel-gauge BAT filter,0.01,0.02
+Passives,R5;R7;R8;R11-R19;R25-R30,18,10k,Generic 0603 1%,0603,Pull-ups and pull-downs,0.01,0.18
+Passives,R6,1,1M,Generic 0603 1%,0603,Load-share gate pulldown,0.01,0.01
+Passives,R9;R10,2,4.7k,Generic 0603 1%,0603,I2C pull-ups,0.01,0.02
+Passives,R20-R22,3,100k,Generic 0603 1%,0603,Jack detect and battery divider,0.01,0.03
+Passives,R24,1,0.01R,Generic 1206 1% 1W,1206,Fuel-gauge sense resistor,0.10,0.10
+Off-board,BT1,1,LiPo 402535 400mAh,Generic 402535,4x25x35mm,Single-cell LiPo with protection,5.00,5.00
+Off-board,DS1,1,OLED 0.96in I2C,SSD1306 128x64 module,27.3x27.8mm,Display module 4-pin I2C,3.00,3.00
+Fabrication,-,1,PCB,JLCPCB 4-layer 80x54mm,1.6mm,Qty 5 minimum order incl shipping,20.00,20.00
+Fabrication,-,4,M2 heat-set insert,M2x4mm OD3.2,brass,Front shell bosses,0.10,0.40
+Fabrication,-,4,M2x12 screw,M2x12 pan head,steel,Back-to-front fastening,0.05,0.20
+Fabrication,-,1,Filament,PETG or PLA,~25g,Three printed parts,1.00,1.00

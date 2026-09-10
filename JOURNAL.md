@@ -239,8 +239,8 @@ front shell. The 1.9 mm³ I saw before was the soldermask film the old
 export put below z=0.
 
 ![assembled](images/case-assembly.png)
-![front shell inside](images/case-front-inside.png)
-![board in the tray](images/case-back-inside.png)
+![back shell tray](images/case-back-inside.png)
+![board in the tray](images/case-pcb-in-tray.png)
 
 **Total time spent: 2 hours**
 
