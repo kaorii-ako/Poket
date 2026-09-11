@@ -26,6 +26,8 @@ Part hunt in the KiCad libs:
 Pin map done on paper first. Had to dodge GPIO35/36/37 (octal PSRAM on
 the R8 module) and 19/20 (native USB).
 
+![hero](images/hero-studio.png)
+
 **Total time spent: 2 hours**
 
 # Sep 9: Schematic — power + charge block
@@ -43,6 +45,8 @@ clean off.
 
 Power switch is a slide switch on the LDO EN pin, not in the battery
 path. No amps through a cheap slide switch.
+
+![power block schematic](images/schematic.png)
 
 **Total time spent: 2 hours**
 
@@ -106,6 +110,8 @@ deleting. Lesson: assert on something unique before you delete.
 
 Also got bitten by 3.0mm pitch on 0603 rows — the courtyard is 3.05mm
 wide, so a 3.0 pitch is a 0.05mm overlap. Everything is on 3.5 now.
+
+![pcb bottom](images/pcb-3d-bottom.png)
 
 **Total time spent: 5 hours**
 
