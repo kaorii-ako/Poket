@@ -8,3 +8,5 @@ __pycache__/
 blender/frames/
 blender/preview_*.png
 blender/promo/
+blender/ad/
+blender/shot_*.png

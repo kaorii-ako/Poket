@@ -13,5 +13,13 @@ enc () {  # enc <frame-dir> <prefix> <out-basename>
     "video/$3.gif"
   echo "video/$3.mp4  $(du -h "video/$3.mp4" | cut -f1)"
 }
-[ -d blender/frames ] && enc blender/frames f_ poket-assembly
-[ -d blender/promo  ] && enc blender/promo  p_ poket-promo
+mp4 () {  # mp4 <frame-dir> <prefix> <out-basename> - video only, no GIF
+  ffmpeg -y -loglevel error -framerate 30 -i "$1/$2%04d.png" \
+    -c:v libx264 -pix_fmt yuv420p -crf 17 -preset slow -movflags +faststart \
+    "video/$3.mp4"
+  echo "video/$3.mp4  $(du -h "video/$3.mp4" | cut -f1)"
+}
+
+[ -d blender/frames    ] && enc blender/frames    f_ poket-assembly
+[ -d blender/promo     ] && enc blender/promo     p_ poket-promo
+[ -d blender/ad/frames ] && mp4 blender/ad/frames a_ poket-ad
