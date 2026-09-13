@@ -1,0 +1,312 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Poket — Plain</title>
+<style>
+/* PLAIN
+   The canon settings page: system type, grouped rows with labels on the left
+   and values on the right, one accent, generous line height, nothing that
+   moves unless the user moved it. This is the control direction — it is what
+   the other three have to beat. It is also the one that survives being used
+   one-handed on a phone at 2am, so it gets the same care, not less. */
+:root{
+  --bg:#f6f6f7; --card:#ffffff; --ink:#16181c; --ink-2:#5c6270; --ink-3:#8b909c;
+  --line:#e3e5e9; --line-2:#eceef1;
+  --accent:#2f6df6; --accent-ink:#ffffff; --accent-soft:#eaf0fe;
+  --good:#1a8a4a; --warn:#b4620b;
+  --r:12px;
+  --sys:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0f1114; --card:#16191e; --ink:#e9ecf1; --ink-2:#a2a9b6; --ink-3:#6f7683;
+  --line:#252a31; --line-2:#1e232a;
+  --accent:#5b8dff; --accent-ink:#0f1114; --accent-soft:#18233a;
+  --good:#4cc182; --warn:#e5a33e;
+}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--sys);font-size:16px;line-height:1.5;
+  padding:clamp(12px,3vw,40px) clamp(12px,3vw,20px);
+  display:flex;justify-content:center;
+}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+h1,h2{margin:0;font-weight:600;letter-spacing:-.01em}
+
+.page{width:min(740px,100%);display:grid;gap:20px}
+
+/* header */
+.top{display:flex;align-items:center;gap:12px}
+.top h1{font-size:26px}
+.top .dot{width:8px;height:8px;border-radius:50%;background:var(--good);flex:none}
+.top .meta{margin-left:auto;color:var(--ink-3);font-size:13px;font-family:var(--mono)}
+
+/* grouped list — the iOS/Android settings idiom, done properly */
+section{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+section > h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);
+  padding:12px 16px 8px;font-weight:600}
+.row{display:flex;align-items:center;gap:14px;padding:13px 16px;border-top:1px solid var(--line-2);
+  min-height:54px}
+.row:first-of-type{border-top:0}
+.row .lbl{min-width:0}
+.row .lbl b{display:block;font-weight:500;font-size:15px}
+.row .lbl small{display:block;color:var(--ink-3);font-size:13px}
+.row .val{margin-left:auto;color:var(--ink-2);font-family:var(--mono);font-size:14px;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* now playing */
+.np{padding:16px;display:grid;gap:12px}
+.np .t{font-size:20px;font-weight:600;letter-spacing:-.01em}
+.np .a{color:var(--ink-2);font-size:15px;margin-top:-4px}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:22px;background:none;margin:0;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--line)}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+  background:var(--accent);margin-top:-5px;border:0}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);border:0}
+.times{display:flex;justify-content:space-between;color:var(--ink-3);font-size:13px;
+  font-family:var(--mono);font-variant-numeric:tabular-nums;margin-top:-8px}
+
+.controls{display:flex;gap:8px}
+button{font:inherit;cursor:pointer}
+.btn{
+  flex:1;appearance:none;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:9px;min-height:44px;display:flex;align-items:center;justify-content:center;gap:7px;
+  font-size:14px;font-weight:500;
+}
+.btn:hover{background:var(--accent-soft);border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn svg{width:17px;height:17px}
+.btn[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+
+/* switch */
+.sw{appearance:none;width:44px;height:26px;flex:none;border-radius:13px;background:var(--line);
+  border:0;position:relative;transition:background .15s;margin-left:auto}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
+.sw[aria-checked=true]{background:var(--accent)}
+.sw[aria-checked=true]::after{transform:translateX(18px)}
+
+/* library */
+ul.lib{list-style:none;margin:0;padding:0;max-height:340px;overflow:auto}
+ul.lib li{display:grid;grid-template-columns:26px 1fr auto;gap:12px;align-items:center;
+  padding:11px 16px;border-top:1px solid var(--line-2);font-size:15px}
+ul.lib li:hover{background:var(--accent-soft)}
+ul.lib li[aria-current]{background:var(--accent-soft)}
+ul.lib li[aria-current] .n b{color:var(--accent)}
+.lib .i{color:var(--ink-3);font-family:var(--mono);font-size:12px;text-align:right}
+.lib .n{min-width:0}
+.lib .n b{font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lib .n small{color:var(--ink-3);font-size:13px}
+.lib .d{color:var(--ink-3);font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums}
+
+/* upload */
+.drop{margin:16px;border:1.5px dashed var(--line);border-radius:10px;padding:22px 16px;text-align:center;
+  color:var(--ink-2);font-size:14px;cursor:pointer}
+.drop[data-over]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.drop b{display:block;font-weight:600;color:var(--ink);margin-bottom:2px}
+.q{padding:0 16px 4px}
+.q .job{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:9px 0;border-top:1px solid var(--line-2);
+  font-size:14px}
+.q .job .bar{grid-column:1/-1;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.q .job .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .18s}
+.q .job .pc{font-family:var(--mono);font-size:13px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+/* theme picker */
+.themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:16px}
+.tcard{appearance:none;border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:9px;display:grid;gap:8px;justify-items:center;color:var(--ink)}
+.tcard:hover{border-color:var(--accent)}
+.tcard[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.tcard canvas{display:block;image-rendering:pixelated;border-radius:3px}
+.tcard span{font-size:13px;font-weight:500}
+.tcard[aria-pressed=true] span{color:var(--accent)}
+
+.preview{padding:16px;display:grid;gap:10px;justify-items:center}
+.preview canvas{display:block;image-rendering:pixelated;border-radius:4px}
+.preview .cap{color:var(--ink-3);font-size:12px;font-family:var(--mono)}
+.zoom{display:flex;gap:6px;align-items:center;color:var(--ink-3);font-size:12px;font-family:var(--mono)}
+.zoom button{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  width:26px;height:26px;border-radius:6px;line-height:1}
+.zoom button:hover{border-color:var(--accent);color:var(--accent)}
+
+footer{color:var(--ink-3);font-size:13px;text-align:center;padding-bottom:8px}
+footer a{color:var(--ink-2)}
+</style>
+
+<div class="page">
+  <div class="top">
+    <span class="dot"></span>
+    <h1>Poket</h1>
+    <span class="meta" id="mHead"></span>
+  </div>
+
+  <section>
+    <h2>Now playing</h2>
+    <div class="np">
+      <div>
+        <div class="t" id="npT"></div>
+        <div class="a" id="npA"></div>
+      </div>
+      <input type="range" id="seek" min="0" max="1000" value="0" aria-label="Seek">
+      <div class="times"><span id="npE">0:00</span><span id="npD">0:00</span></div>
+      <div class="controls">
+        <button class="btn" id="bPrev" aria-label="Previous track">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 6h2v12H7zM19 6v12l-9-6z"/></svg>
+        </button>
+        <button class="btn primary" id="bPlay">
+          <svg viewBox="0 0 24 24" fill="currentColor" id="ppIcon"><path d="M8 5h3v14H8zM13 5h3v14h-3z"/></svg>
+          <span id="ppLbl">Pause</span>
+        </button>
+        <button class="btn" id="bNext" aria-label="Next track">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 6h2v12h-2zM5 6l9 6-9 6z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="lbl"><b>Volume</b></div>
+      <input type="range" id="vol" min="0" max="100" value="68" style="max-width:210px" aria-label="Volume">
+      <span class="val" id="volV">68</span>
+    </div>
+    <div class="row">
+      <div class="lbl"><b>Bluetooth output</b><small id="btSub">Headphone jack in use</small></div>
+      <button class="sw" id="btSw" role="switch" aria-checked="false" aria-label="Bluetooth output"></button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Screen theme</h2>
+    <div class="preview">
+      <canvas id="big"></canvas>
+      <div class="zoom">
+        <button id="zOut" aria-label="Smaller preview">−</button>
+        <span id="zLbl">128 × 64 · 6×</span>
+        <button id="zIn" aria-label="Larger preview">+</button>
+      </div>
+      <div class="cap">Live preview — same font and drawing code as the device</div>
+    </div>
+    <div class="themes" id="themes"></div>
+  </section>
+
+  <section>
+    <h2>Library · <span id="libCount"></span></h2>
+    <ul class="lib" id="lib"></ul>
+  </section>
+
+  <section>
+    <h2>Add music</h2>
+    <div class="drop" id="drop">
+      <b>Drop MP3 files here</b>
+      Or tap to choose · written to /Music on the card
+    </div>
+    <div class="q" id="queue"></div>
+  </section>
+
+  <section>
+    <h2>Device</h2>
+    <div class="row"><div class="lbl"><b>Storage</b><small id="cardSub"></small></div><span class="val" id="cardV"></span></div>
+    <div class="row"><div class="lbl"><b>Battery</b><small id="battSub"></small></div><span class="val" id="battV"></span></div>
+    <div class="row"><div class="lbl"><b>Network</b><small id="netSub"></small></div><span class="val" id="netV"></span></div>
+    <div class="row"><div class="lbl"><b>Firmware</b></div><span class="val" id="fwV"></span></div>
+    <div class="row"><div class="lbl"><b>Uptime</b></div><span class="val" id="upV"></span></div>
+  </section>
+
+  <footer>Wi-Fi and Bluetooth share one radio. While this page is open, audio plays out of the 3.5&nbsp;mm jack.</footer>
+</div>
+
+<script type="module">
+import { TRACKS, NOW, DEVICE, fmt } from './data.js';
+import { THEMES, render } from './oled.js';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+let theme='minimal', tick=0, playing=true, scale=6, seeking=false;
+
+// header + device rows
+$('#mHead').textContent = DEVICE.ip;
+$('#npT').textContent = NOW.title;
+$('#npA').textContent = NOW.artist;
+$('#npD').textContent = fmt(NOW.duration);
+$('#cardV').textContent = DEVICE.cardUsed.toFixed(1)+' / '+DEVICE.cardTotal+' GB';
+$('#cardSub').textContent = (DEVICE.cardTotal-DEVICE.cardUsed).toFixed(1)+' GB free on the microSD card';
+$('#battV').textContent = NOW.batt+'%';
+$('#battSub').textContent = NOW.charging ? 'Charging over USB-C' : 'About 6 h of playback left';
+$('#netV').textContent = DEVICE.ssid;
+$('#netSub').textContent = 'Access point · '+DEVICE.ip;
+$('#fwV').textContent = DEVICE.fw;
+$('#upV').textContent = DEVICE.uptime;
+$('#libCount').textContent = TRACKS.length+' tracks';
+
+// library
+$('#lib').innerHTML = TRACKS.map(t=>`<li ${t.title===NOW.title?'aria-current="true"':''}>
+  <span class="i">${t.n}</span>
+  <span class="n"><b>${t.title}</b><small>${t.artist} · ${t.kbps} kbps</small></span>
+  <span class="d">${fmt(t.dur)}</span></li>`).join('');
+
+// theme cards — each renders its own live thumbnail at scale 2 (still integer)
+const cards={};
+Object.entries(THEMES).forEach(([id,t])=>{
+  const b=document.createElement('button'); b.type='button'; b.className='tcard';
+  b.setAttribute('aria-pressed',String(id===theme));
+  const cv=document.createElement('canvas'); const sp=document.createElement('span');
+  sp.textContent=t.name; b.append(cv,sp);
+  b.onclick=()=>{theme=id;Object.entries(cards).forEach(([k,v])=>v.btn.setAttribute('aria-pressed',String(k===theme)));};
+  cards[id]={btn:b,cv}; $('#themes').append(b);
+});
+
+// transport
+$('#bPlay').onclick=()=>{
+  playing=!playing; NOW.state=playing?'playing':'paused';
+  $('#ppLbl').textContent=playing?'Pause':'Play';
+  $('#ppIcon').innerHTML=playing?'<path d="M8 5h3v14H8zM13 5h3v14h-3z"/>':'<path d="M8 5l11 7-11 7z"/>';
+};
+const step=d=>{const i=TRACKS.findIndex(t=>t.title===NOW.title);
+  const t=TRACKS[(i+d+TRACKS.length)%TRACKS.length];
+  Object.assign(NOW,{title:t.title,artist:t.artist,duration:t.dur,bitrate:t.kbps,elapsed:0,pos:t.n});
+  $('#npT').textContent=t.title; $('#npA').textContent=t.artist; $('#npD').textContent=fmt(t.dur);
+  $$('#lib li').forEach(li=>li.removeAttribute('aria-current'));
+  $$('#lib li')[t.n-1].setAttribute('aria-current','true');
+};
+$('#bNext').onclick=()=>step(1); $('#bPrev').onclick=()=>step(-1);
+const seek=$('#seek');
+seek.addEventListener('input',()=>{seeking=true;NOW.elapsed=Math.round(seek.value/1000*NOW.duration);
+  $('#npE').textContent=fmt(NOW.elapsed);});
+seek.addEventListener('change',()=>seeking=false);
+$('#vol').addEventListener('input',e=>{NOW.volume=+e.target.value;$('#volV').textContent=NOW.volume;});
+$('#btSw').onclick=e=>{const on=e.currentTarget.getAttribute('aria-checked')!=='true';
+  e.currentTarget.setAttribute('aria-checked',String(on)); NOW.out=on?'bt':'jack';
+  $('#btSub').textContent=on?'Sending to paired headphones':'Headphone jack in use';};
+
+// zoom — integer steps only, so pixels never resample
+const clampS=v=>Math.max(2,Math.min(10,v));
+const setZ=v=>{scale=clampS(v);$('#zLbl').textContent='128 × 64 · '+scale+'×';};
+$('#zIn').onclick=()=>setZ(scale+1); $('#zOut').onclick=()=>setZ(scale-1);
+
+// upload
+const drop=$('#drop');
+['dragenter','dragover'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.setAttribute('data-over','');}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.removeAttribute('data-over');}));
+drop.addEventListener('drop',ev=>{for(const f of ev.dataTransfer.files) job(f.name,f.size);});
+drop.addEventListener('click',()=>job('Demo Track.mp3',7.4e6));
+function job(name,bytes){
+  const el=document.createElement('div'); el.className='job';
+  el.innerHTML=`<span>${name}</span><span class="pc">0%</span><span class="bar"><i></i></span>`;
+  $('#queue').prepend(el);
+  let p=0;const iv=setInterval(()=>{p=Math.min(100,p+7);
+    el.querySelector('.pc').textContent=p+'%'; el.querySelector('.bar i').style.width=p+'%';
+    if(p>=100){clearInterval(iv);el.querySelector('.pc').textContent='Done';
+      setTimeout(()=>el.remove(),1600);} },150);
+}
+
+function frame(){
+  tick++;
+  if(playing&&!seeking&&tick%25===0) NOW.elapsed=(NOW.elapsed+1)%NOW.duration;
+  if(!seeking){seek.value=NOW.elapsed/NOW.duration*1000;$('#npE').textContent=fmt(NOW.elapsed);}
+  render($('#big'),theme,NOW,tick,{scale,on:'#e8f4ff',off:'#0b0f14'});
+  if(tick%3===0) for(const id in cards) render(cards[id].cv,id,NOW,tick,{scale:2,on:'#e8f4ff',off:'#0b0f14'});
+  requestAnimationFrame(frame);
+}
+setZ(6); frame();
+</script>

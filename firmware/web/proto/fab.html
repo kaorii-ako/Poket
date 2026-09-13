@@ -1,0 +1,241 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Poket — Fab</title>
+<style>
+/* FAB DRAWING
+   The board's own documentation language: white silkscreen on solder mask,
+   reference designators on every control, a drill table, dimension leaders,
+   and a title block anchored bottom-right the way a real fab drawing carries
+   its revision. The risk is that dark-plus-accent is exactly the rut every
+   ESP32 web page ships, so the distance is bought with drawing conventions,
+   not with the palette. */
+:root{
+  --mask:#0d2b1f;         /* solder mask */
+  --mask-2:#0a2219;
+  --silk:#e9f2ec;         /* silkscreen white */
+  --silk-2:#93ad9f;
+  --copper:#c8912f;       /* exposed pad gold */
+  --hairline:#1d4636;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --sans:ui-sans-serif,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;min-height:100vh;background:#061510;color:var(--silk);
+  font-family:var(--mono);font-size:13px;line-height:1.55;
+  padding:clamp(10px,2.4vw,28px);display:flex;justify-content:center;
+}
+::selection{background:var(--copper);color:#131313}
+:focus-visible{outline:1.5px solid var(--copper);outline-offset:2px}
+
+.sheet{
+  width:min(1180px,100%);background:var(--mask);
+  border:1.5px solid var(--silk-2);position:relative;
+  padding:clamp(14px,2vw,26px);
+  background-image:
+    linear-gradient(var(--hairline) 1px,transparent 1px),
+    linear-gradient(90deg,var(--hairline) 1px,transparent 1px);
+  background-size:26px 26px;
+}
+/* corner fiducials */
+.fid{position:absolute;width:12px;height:12px;border:1.5px solid var(--copper);border-radius:50%}
+.fid.tl{top:7px;left:7px} .fid.tr{top:7px;right:7px}
+.fid.bl{bottom:7px;left:7px} .fid.br{bottom:7px;right:7px}
+
+.hdr{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;
+  border-bottom:1.5px solid var(--silk-2);padding-bottom:10px;margin-bottom:16px}
+.hdr h1{margin:0;font-family:var(--sans);font-size:26px;letter-spacing:.16em;
+  text-transform:uppercase;font-weight:700}
+.hdr .rev{border:1.5px solid var(--silk);padding:2px 7px;font-size:11px;letter-spacing:.14em}
+.hdr .dims{margin-left:auto;color:var(--silk-2);font-size:11px;letter-spacing:.1em}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+
+.block{border:1.5px solid var(--silk-2);background:var(--mask-2)}
+.block > h2{
+  margin:0;font-family:var(--sans);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  padding:6px 10px;border-bottom:1.5px solid var(--silk-2);color:var(--silk-2);font-weight:600;
+  display:flex;justify-content:space-between;
+}
+.block .body{padding:10px}
+
+/* designator badge - every control is labelled like a part */
+.des{display:inline-block;min-width:30px;text-align:center;font-size:10px;
+  border:1px solid var(--copper);color:var(--copper);padding:0 4px;margin-right:8px;letter-spacing:.06em}
+
+table{border-collapse:collapse;width:100%;font-size:12px}
+th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--hairline)}
+th{color:var(--silk-2);font-weight:500;font-size:10px;letter-spacing:.16em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--silk-2)}
+tr[data-playing] td{color:var(--copper)}
+tbody tr:hover td{background:#123527}
+
+.pads{display:flex;gap:7px;flex-wrap:wrap;padding:2px}
+.pad{
+  appearance:none;font:inherit;cursor:pointer;color:var(--mask);
+  background:var(--copper);border:0;border-radius:2px;padding:7px 11px;
+  font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  box-shadow:0 0 0 1.5px #8f6516 inset;
+}
+.pad:hover{filter:brightness(1.1)}
+.pad.ghost{background:transparent;color:var(--silk);box-shadow:0 0 0 1.5px var(--silk-2) inset}
+.pad.ghost:hover{background:#143a2b}
+.pad[aria-pressed=true]{background:var(--silk);color:var(--mask);box-shadow:none}
+
+.drill{border:1.5px dashed var(--silk-2);padding:14px;text-align:center;
+  color:var(--silk-2);font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.drill[data-over]{border-color:var(--copper);color:var(--copper);background:#143a2b}
+
+.screenBay{background:#04110c;border:1.5px solid var(--silk-2);padding:8px;display:flex;justify-content:center}
+.screenBay canvas{display:block;image-rendering:pixelated}
+.themeRows{display:grid;gap:0}
+.themeRows button{
+  appearance:none;font:inherit;cursor:pointer;text-align:left;color:var(--silk);
+  background:none;border:0;border-bottom:1px solid var(--hairline);
+  padding:7px 10px;display:flex;justify-content:space-between;font-size:11px;letter-spacing:.1em;
+}
+.themeRows button:hover{background:#123527}
+.themeRows button[aria-pressed=true]{color:var(--copper)}
+.themeRows button[aria-pressed=true]::after{content:"◆";margin-left:8px}
+
+/* title block, bottom right, like a real drawing */
+.title-block{border:1.5px solid var(--silk-2);display:grid;grid-template-columns:auto 1fr;
+  font-size:11px}
+.title-block div{padding:5px 8px;border-bottom:1px solid var(--hairline)}
+.title-block div:nth-child(odd){color:var(--silk-2);letter-spacing:.14em;text-transform:uppercase;
+  border-right:1px solid var(--hairline)}
+.bar{height:3px;background:var(--hairline);position:relative;margin-top:8px}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--copper)}
+.note{color:var(--silk-2);font-size:11px;max-width:70ch}
+</style>
+
+<div class="sheet">
+  <span class="fid tl"></span><span class="fid tr"></span><span class="fid bl"></span><span class="fid br"></span>
+
+  <div class="hdr">
+    <h1>Poket</h1>
+    <span class="rev">REV A</span>
+    <span class="dims">80.00 × 54.00 mm · 4 LAYER · 1.60 mm</span>
+  </div>
+
+  <div class="grid">
+    <div style="display:grid;gap:18px;min-width:0">
+      <div class="block">
+        <h2><span>U1 · Transport</span><span id="stateTxt">PLAYING</span></h2>
+        <div class="body">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap">
+            <div style="min-width:0">
+              <div style="font-family:var(--sans);font-size:19px" id="tTitle"></div>
+              <div style="color:var(--silk-2)" id="tArtist"></div>
+            </div>
+            <div class="num" style="font-size:17px"><span id="tElapsed">0:00</span> / <span id="tDur">0:00</span></div>
+          </div>
+          <div class="bar"><i id="tBar" style="width:0"></i></div>
+          <div class="pads" style="margin-top:12px">
+            <button class="pad ghost" data-act="prev"><span class="des">SW2</span>Prev</button>
+            <button class="pad" data-act="play"><span class="des" style="border-color:var(--mask);color:var(--mask)">SW3</span><span id="ppLbl">Pause</span></button>
+            <button class="pad ghost" data-act="next"><span class="des">SW4</span>Next</button>
+            <button class="pad ghost" data-toggle="bt"><span class="des">U1</span>Bluetooth</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="block">
+        <h2><span>J2 · microSD · /Music</span><span id="cnt"></span></h2>
+        <div class="body" style="padding:0">
+          <table>
+            <thead><tr><th style="width:46px">Item</th><th>Designation</th><th style="width:78px">Length</th><th style="width:74px">Rate</th><th style="width:74px">Size</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="drill" id="drop">Drop MP3 files · adds rows to the table above</div>
+    </div>
+
+    <div style="display:grid;gap:18px;align-content:start">
+      <div class="block">
+        <h2><span>DS1 · SSD1306</span><span>128×64</span></h2>
+        <div class="body" style="padding:8px">
+          <div class="screenBay"><canvas id="big"></canvas></div>
+        </div>
+        <div class="themeRows" id="themes"></div>
+      </div>
+
+      <div class="title-block">
+        <div>Project</div><div>Poket</div>
+        <div>Sheet</div><div>Web UI 1/1</div>
+        <div>Addr</div><div id="tIp"></div>
+        <div>SSID</div><div id="tSsid"></div>
+        <div>Card</div><div id="tCard"></div>
+        <div>Batt</div><div id="tBatt"></div>
+        <div>FW</div><div id="tFw"></div>
+      </div>
+
+      <p class="note">NOTE 1 — Wi-Fi and BT share one radio; while this page is served, audio routes to J3 (3.5 mm).</p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { TRACKS, NOW, DEVICE, fmt } from './data.js';
+import { THEMES, render } from './oled.js';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+let theme='minimal', tick=0, playing=true;
+
+$('#rows').innerHTML = TRACKS.map(t=>`<tr ${t.title===NOW.title?'data-playing':''}>
+  <td class="num">${String(t.n).padStart(2,'0')}</td>
+  <td>${t.title} <span style="color:var(--silk-2)">/ ${t.artist}</span></td>
+  <td class="num">${fmt(t.dur)}</td>
+  <td class="num">${t.kbps}k</td>
+  <td class="num">${t.size} MB</td></tr>`).join('');
+$('#cnt').textContent = TRACKS.length + ' ITEMS';
+$('#tTitle').textContent = NOW.title;
+$('#tArtist').textContent = NOW.artist;
+$('#tDur').textContent = fmt(NOW.duration);
+$('#tIp').textContent = DEVICE.ip; $('#tSsid').textContent = DEVICE.ssid;
+$('#tCard').textContent = DEVICE.cardUsed+' / '+DEVICE.cardTotal+' GB';
+$('#tBatt').textContent = NOW.batt+'%'; $('#tFw').textContent = DEVICE.fw;
+
+const holder=$('#themes');
+Object.entries(THEMES).forEach(([id,t])=>{
+  const b=document.createElement('button'); b.type='button';
+  b.setAttribute('aria-pressed',String(id===theme));
+  b.innerHTML=`<span>${t.name}</span><span style="color:var(--silk-2)">DS1</span>`;
+  b.onclick=()=>{theme=id;$$('.themeRows button').forEach((x,i)=>
+    x.setAttribute('aria-pressed',String(Object.keys(THEMES)[i]===theme)));};
+  holder.append(b);
+});
+
+$('[data-act=play]').onclick=()=>{playing=!playing;NOW.state=playing?'playing':'paused';
+  $('#ppLbl').textContent=playing?'Pause':'Play';$('#stateTxt').textContent=playing?'PLAYING':'PAUSED';};
+$('[data-toggle=bt]').onclick=e=>{const on=e.currentTarget.getAttribute('aria-pressed')!=='true';
+  e.currentTarget.setAttribute('aria-pressed',String(on)); NOW.out=on?'bt':'jack';};
+
+const drop=$('#drop');
+['dragenter','dragover'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.setAttribute('data-over','');}));
+['dragleave','drop'].forEach(e=>drop.addEventListener(e,ev=>{ev.preventDefault();drop.removeAttribute('data-over');}));
+drop.addEventListener('drop',ev=>{for(const f of ev.dataTransfer.files) add(f.name);});
+drop.addEventListener('click',()=>add('Demo Track.mp3'));
+function add(name){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td class="num">··</td><td>${name}</td><td class="num" colspan="3">uploading 0%</td>`;
+  $('#rows').prepend(tr);
+  let p=0;const iv=setInterval(()=>{p=Math.min(100,p+8);
+    tr.cells[2].textContent='uploading '+p+'%';
+    if(p>=100){clearInterval(iv);tr.cells[2].textContent='written';}
+  },150);
+}
+
+function frame(){
+  tick++;
+  if(playing&&tick%25===0) NOW.elapsed=(NOW.elapsed+1)%NOW.duration;
+  $('#tElapsed').textContent=fmt(NOW.elapsed);
+  $('#tBar').style.width=(NOW.elapsed/NOW.duration*100)+'%';
+  render($('#big'),theme,NOW,tick,{scale:4,on:'#e9f2ec',off:'#04110c',grid:false});
+  requestAnimationFrame(frame);
+}
+frame();
+</script>

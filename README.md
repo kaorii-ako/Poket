@@ -19,6 +19,75 @@ coulomb-counting fuel gauge.
 | Board | 80 × 54 mm, 4 layer (Sig / solid GND / Sig / Sig) |
 | Case | 86 × 60 × 16.8 mm, 3D printed, two shells + slider cap, chamfered edges |
 
+
+## The board
+
+![PCB top](images/pcb-3d-top.png)
+
+Top side: ESP32-S3 module and its antenna keepout top-right, audio chain and
+power block under where the OLED sits, encoder centre-right, three transport
+buttons along the bottom, USB-C bottom-right, 3.5 mm jack top-left.
+
+![PCB bottom](images/pcb-bottom-pair.png)
+
+Bottom side carries the microSD socket and the BOOT/RESET buttons, so the top
+face stays clean. Right: all four copper layers together — In1.Cu is a solid
+ground plane with no signal on it at all.
+
+![schematic](images/schematic.png)
+
+Full schematic (also as a PDF: [`docs/poket-schematic.pdf`](docs/poket-schematic.pdf)).
+ERC clean — 0 errors, 0 warnings.
+
+![case](images/hero-studio.png)
+
+## The firmware
+
+ESP-IDF v5.3, C. Reads MP3s off the card with a vendored [minimp3], decodes
+into PSRAM and pushes PCM to either sink — I2S to the PCM5102A, or A2DP source
+to a paired pair of headphones.
+
+![OLED themes](images/oled-themes.png)
+
+Six themes ship, and they are not palette swaps — a 1-bit 128 x 64 panel has no
+colour to vary, so each one earns its difference through layout, typeface,
+iconography and motion. Clockwise from top-left: **Minimal**, **Anime**
+(a face that blinks on its own timer), **Cassette** (reels that wind across as
+the track plays), **Y2K Chrome**, **Brutalist**, **Terminal**. A seventh slot
+takes a custom theme uploaded from the browser; that one is *data*, not code,
+so an uploaded pack can lay out screens but can never execute on the device.
+
+The two smallest faces are a hand-drawn 5x8 bitmap table
+([`tools/font5x8.py`](firmware/tools/font5x8.py)) — rasterising an outline at
+7-8 px loses whole stems, and a 1-bit panel has no antialiasing to hide that
+with. The rest come from real faces through
+[`tools/mkfont.py`](firmware/tools/mkfont.py).
+
+### The web app
+
+Hold the encoder and Poket brings up its own Wi-Fi access point and serves a
+page: drag MP3s onto it to write them to the card, browse the library, drive
+transport, and pick the screen theme with a **live 128 x 64 preview**. The
+preview is not an artist's impression — `web/proto/oled.js` is a port of
+`ui/gfx.c` and runs the same theme code against the same generated glyph bytes,
+painted at an integer zoom so one panel pixel is exactly N x N screen pixels
+with smoothing off.
+
+Four design directions are prototyped in
+[`firmware/web/proto/`](firmware/web/proto/) — open `index.html`:
+
+| | |
+|---|---|
+| `jcard.html` | ink on cassette card stock; upload zone is a blank Side B |
+| `bench.html` | desk instrument — keycaps with travel, knurled knob, amber readout |
+| `fab.html` | the board documenting itself: silkscreen on solder mask, designators, title block |
+| `plain.html` | the canon settings page; the control the other three have to beat |
+
+Wi-Fi and Bluetooth share one radio, so while the page is being served audio
+routes out the 3.5 mm jack.
+
+[minimp3]: firmware/components/minimp3/
+
 ## Video
 
 | | |
@@ -44,6 +113,7 @@ Encode the PNG sequences with `tools/encode_video.sh`.
 
 ```
 poket.kicad_sch / .kicad_pcb / .kicad_pro   KiCad 10 project
+firmware/                                   ESP-IDF app - drivers, audio, UI themes, web app
 cad/enclosure.py                            parametric enclosure (FreeCAD, headless)
 enclosure/*.step, *.stl                     exported case parts
 docs/                                       BOM, assembly, design notes, schematic PDF
@@ -77,8 +147,11 @@ Design complete and verified in software: **ERC 0 errors, DRC 0 errors,
 0 unconnected nets, 0 schematic-parity issues**, and the enclosure booleans
 against the real board outline with zero interference.
 
-**Not yet built and no firmware written** — see
-[`docs/SUBMISSION.md`](docs/SUBMISSION.md) for the honest gap list.
+Firmware is in progress: drivers, the audio path, the library scanner, the
+1-bit graphics layer and all six themes are written; the app shell and the
+Wi-Fi/HTTP layer are not finished, so **nothing has been flashed to real
+hardware yet**. See [`docs/SUBMISSION.md`](docs/SUBMISSION.md) for the honest
+gap list.
 
 ## License
 

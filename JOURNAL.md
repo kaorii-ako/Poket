@@ -329,3 +329,55 @@ firmware, so I'm not going to claim it works.
 ![face](images/promo-face.png)
 
 **Total time spent: 4 hours**
+
+# Sep 13: Firmware — drivers, six themes, and a fight with fonts
+
+Project got returned by a smith: no firmware in the repo, and the README was
+missing pictures of the board. Fair.
+
+Pulled the pin map straight out of the schematic netlist XML into `board.h` so
+the firmware can't drift from the hardware. Then wrote down the stack:
+
+- `drivers/` — I2C bus, SSD1306, encoder+buttons, BQ27441 fuel gauge
+- `storage/` — SDMMC 4-bit mount, library scan, ID3 tags
+- `audio/` — minimp3 decode into one sink interface, I2S or A2DP behind it
+- `ui/` — 1-bit framebuffer + theme engine
+
+**Themes.** Six of them. The point the user asked for was "anime theme,
+minimalist theme and so on" — but on a 1-bit 128×64 panel there's no colour to
+swap, so a theme has to differ in layout, typeface, icons and motion or it's
+nothing. Minimal / Anime / Terminal / Cassette / Brutalist / Y2K. Custom
+uploads land as *data*, never code — a theme pack from a browser must not be
+able to execute on the device.
+
+![themes](images/oled-themes.png)
+
+**Fonts ate the day.** No PIL, no freetype on this machine, so the rasteriser
+is SVG → rsvg-convert → ffmpeg → threshold. Three separate things wrong with it:
+
+1. At 7–8px the threshold ate the stems. `n` came out as two dots, `:` as one.
+   Fixed by not using an outline at all down there — hand-drew a 5×8 table.
+2. At 9–10px it lost the top arm off `E`. It was thresholding the 1:1
+   anti-aliased render, so a half-covered column never cleared the cut. Now it
+   renders 4× and box-filters down, so the threshold sees real coverage.
+3. **librsvg was ignoring `@font-face src:url()` entirely.** All nine "different
+   typefaces" were the same fallback sans. Rendered an R in four faces and got
+   four identical bitmaps. Naming the face by fontconfig family instead fixed
+   it — the brutalist numerals are actually a serif now.
+
+**Clipping bug.** The marquee scrolled its text and then blanked the overspill
+with two 40px rectangles. Those rectangles were erasing whatever the theme had
+drawn beside the line — which is why the anime face was missing its top half
+for an hour. `gfx` has a real clip rect now and the marquee sets it.
+
+**Web app prototypes.** Four directions for the page the device serves over its
+own AP: J-Card, bench instrument, fab drawing, and a plain settings page as the
+control. The OLED preview in all four is a JS port of `gfx.c` running the same
+theme code against the same generated glyph bytes — and it paints at an
+**integer** zoom with smoothing off, so one panel pixel is exactly N×N screen
+pixels. Wrote a test that asserts that at 1/2/3/4/6/8/10× across all six themes.
+
+Still to do: the app shell, the Wi-Fi + HTTP layer, `main.c`. Nothing has been
+flashed to hardware.
+
+**Total time spent: 6 hours**

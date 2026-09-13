@@ -1,0 +1,279 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Poket — Bench</title>
+<style>
+/* BENCH INSTRUMENT
+   A desk unit: gunmetal chassis, a grid of keycaps with dye-sub legends, one
+   knurled knob for anything continuous, one safety-orange key for the action
+   that commits, and an amber readout that reports one thing at a time.
+   Layout moves in whole key units, never fractions. */
+:root{
+  --chassis:#23262a; --chassis-2:#1a1d20; --panel:#2c3035;
+  --cap:#cfcabd; --cap-2:#b8b2a3; --cap-ink:#20221f;
+  --legend:#8f9499; --edge:#3b4046;
+  --orange:#f0620c; --amber:#ffb02e;
+  --sans:ui-sans-serif,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --u:64px;              /* one key unit */
+}
+*{box-sizing:border-box}
+body{
+  margin:0;min-height:100vh;background:
+    radial-gradient(120% 90% at 50% -10%,#31353a,#131517 70%);
+  color:#dfe3e6;font-family:var(--sans);font-size:15px;
+  display:flex;align-items:center;justify-content:center;padding:clamp(12px,3vw,36px);
+}
+::selection{background:var(--orange);color:#fff}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+.chassis{
+  width:min(1120px,100%);background:linear-gradient(#2a2e33,#212427);
+  border:1px solid #41464c;border-radius:10px;
+  box-shadow:0 1px 0 rgba(255,255,255,.07) inset,0 30px 70px -20px #000;
+  padding:clamp(14px,2vw,24px);
+  display:grid;gap:18px;grid-template-columns:minmax(0,1fr) 268px;
+}
+@media(max-width:880px){.chassis{grid-template-columns:1fr}}
+
+.brand{display:flex;align-items:center;gap:12px;grid-column:1/-1;
+  padding-bottom:14px;border-bottom:1px solid var(--edge)}
+.brand b{font-size:15px;letter-spacing:.32em;text-transform:uppercase}
+.brand .screws{margin-left:auto;display:flex;gap:9px}
+.screws i{width:9px;height:9px;border-radius:50%;background:#15171a;
+  box-shadow:0 1px 0 #4a5057 inset;display:block;position:relative}
+.screws i::after{content:"";position:absolute;inset:3px 1px;background:#3a4046;transform:rotate(28deg)}
+
+/* --- readout ----------------------------------------------------------- */
+.readout{
+  background:#120d05;border:1px solid #3a2c12;border-radius:5px;
+  padding:12px 14px;display:grid;gap:10px;
+  box-shadow:0 0 26px -6px rgba(255,176,46,.28) inset;
+}
+.readout .line{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.readout .big{font-family:var(--mono);font-size:22px;color:var(--amber);
+  font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.readout .sub{font-family:var(--mono);font-size:11px;color:#a8791f;letter-spacing:.1em;text-transform:uppercase}
+.readout .track{font-size:14px;color:#ffd894;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meter{height:4px;background:#2a1f0b;position:relative;overflow:hidden;border-radius:2px}
+.meter i{position:absolute;inset:0 auto 0 0;background:var(--amber);box-shadow:0 0 8px var(--amber)}
+
+/* --- keycaps ----------------------------------------------------------- */
+.keys{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--u),1fr));gap:9px}
+.cap{
+  appearance:none;font:inherit;cursor:pointer;position:relative;
+  height:var(--u);border-radius:6px;border:0;padding:0;
+  background:linear-gradient(var(--cap),var(--cap-2));
+  color:var(--cap-ink);
+  box-shadow:0 4px 0 #7c776a,0 6px 10px -3px rgba(0,0,0,.6),0 1px 0 #fff inset;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  transition:transform .05s,box-shadow .05s;
+}
+.cap:hover{filter:brightness(1.04)}
+.cap:active,.cap[aria-pressed=true]{
+  transform:translateY(3px);
+  box-shadow:0 1px 0 #7c776a,0 2px 5px -2px rgba(0,0,0,.6),0 1px 0 #fff inset;
+}
+.cap span{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase}
+.cap svg{width:19px;height:19px}
+.cap[data-commit]{
+  background:linear-gradient(#ff7b2e,var(--orange));color:#fff;
+  box-shadow:0 4px 0 #9c3c05,0 6px 12px -3px rgba(240,98,12,.5),0 1px 0 rgba(255,255,255,.35) inset;
+}
+.cap[data-commit]:active{box-shadow:0 1px 0 #9c3c05,0 2px 6px -2px rgba(240,98,12,.5)}
+.cap[data-lit]{background:linear-gradient(#f6f1e2,#ddd7c6)}
+.cap[data-lit]::after{content:"";position:absolute;top:5px;right:5px;width:5px;height:5px;
+  border-radius:50%;background:var(--amber);box-shadow:0 0 7px var(--amber)}
+
+/* --- knob -------------------------------------------------------------- */
+.knobWrap{display:flex;align-items:center;gap:14px;padding:12px 2px}
+.knob{
+  width:88px;height:88px;border-radius:50%;flex:none;cursor:ns-resize;
+  background:conic-gradient(from 0deg,#4a5057 0 2deg,#31363b 2deg 6deg);
+  box-shadow:0 5px 14px -4px #000,0 1px 0 #5c636a inset;
+  position:relative;display:grid;place-items:center;
+}
+.knob::before{content:"";width:56px;height:56px;border-radius:50%;
+  background:linear-gradient(#3d4349,#272b2f);box-shadow:0 1px 0 #5c636a inset}
+.knob i{position:absolute;left:50%;top:9px;width:3px;height:17px;border-radius:2px;
+  background:var(--amber);transform-origin:50% 35px;box-shadow:0 0 7px var(--amber)}
+.knobWrap .val{font-family:var(--mono);font-size:26px;color:var(--amber);font-variant-numeric:tabular-nums}
+.knobWrap .cap2{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--legend);text-transform:uppercase}
+
+/* --- list -------------------------------------------------------------- */
+.rack{background:var(--chassis-2);border:1px solid var(--edge);border-radius:7px;overflow:hidden}
+.rack header{display:flex;justify-content:space-between;align-items:center;
+  padding:9px 12px;background:#191c1f;border-bottom:1px solid var(--edge)}
+.rack header b{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--legend);text-transform:uppercase}
+.rack ul{list-style:none;margin:0;padding:0;max-height:320px;overflow:auto}
+.rack li{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;
+  padding:8px 12px;border-bottom:1px solid #212529;font-size:14px}
+.rack li:hover{background:#20242a}
+.rack li[data-playing]{background:#2a1d0a}
+.rack .i{font-family:var(--mono);font-size:10px;color:var(--legend)}
+.rack li[data-playing] .i{color:var(--amber)}
+.rack .n{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rack .n em{color:#9aa1a8;font-style:normal}
+.rack .n em::before{content:" · "}
+.rack .d{font-family:var(--mono);font-size:12px;color:#9aa1a8;font-variant-numeric:tabular-nums}
+
+.slot{border:1px dashed #4b5158;border-radius:7px;padding:16px;text-align:center;
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--legend);
+  text-transform:uppercase;cursor:pointer}
+.slot[data-over]{border-color:var(--orange);color:#ffcba6;background:#2a1c12}
+
+/* --- panel screen ------------------------------------------------------ */
+.aside{display:grid;gap:14px;align-content:start}
+.screenBay{background:#0b0f14;border:1px solid var(--edge);border-radius:6px;padding:9px;
+  display:flex;justify-content:center}
+.screenBay canvas{display:block;image-rendering:pixelated}
+.themeList{display:grid;gap:6px}
+.themeBtn{appearance:none;font:inherit;cursor:pointer;text-align:left;
+  background:#1c2024;border:1px solid var(--edge);border-radius:5px;color:#cfd4d8;
+  padding:7px 10px;display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.themeBtn:hover{border-color:#5a6168}
+.themeBtn[aria-pressed=true]{border-color:var(--amber);color:var(--amber)}
+dl.spec{margin:0;display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-family:var(--mono);font-size:11px}
+dl.spec dt{color:var(--legend);letter-spacing:.1em;text-transform:uppercase}
+dl.spec dd{margin:0;color:#cfd4d8;text-align:right}
+</style>
+
+<div class="chassis">
+  <div class="brand">
+    <b>Poket</b>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--legend);letter-spacing:.12em">PORTABLE AUDIO · MK1</span>
+    <span class="screws"><i></i><i></i></span>
+  </div>
+
+  <div style="display:grid;gap:14px;min-width:0">
+    <div class="readout">
+      <div class="line"><span class="sub">Now playing</span><span class="sub" id="outMode">JACK</span></div>
+      <div class="track" id="rTitle"></div>
+      <div class="line"><span class="big" id="rTime">0:00</span><span class="big" id="rDur">0:00</span></div>
+      <div class="meter"><i id="rBar" style="width:0"></i></div>
+    </div>
+
+    <div class="keys">
+      <button class="cap" data-act="prev"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M15 4v12L6 10zM5 4v12"/></svg><span>Prev</span></button>
+      <button class="cap" data-commit data-act="play"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 4v12M13 4v12"/></svg><span id="ppLbl">Pause</span></button>
+      <button class="cap" data-act="next"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4v12l9-6zM15 4v12"/></svg><span>Next</span></button>
+      <button class="cap" data-toggle="shuffle"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 5h4l6 10h4M3 15h4l6-10h4M15 3l2 2-2 2M15 13l2 2-2 2"/></svg><span>Shuf</span></button>
+      <button class="cap" data-toggle="repeat"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 8a4 4 0 014-4h8M16 12a4 4 0 01-4 4H4M14 2l2 2-2 2M6 14l-2 2 2 2"/></svg><span>Rept</span></button>
+      <button class="cap" data-toggle="bt"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 6l6 8-3 3V3l3 3-6 8"/></svg><span>BT</span></button>
+    </div>
+
+    <div class="knobWrap">
+      <div class="knob" id="knob" role="slider" aria-label="Volume" aria-valuemin="0" aria-valuemax="100" aria-valuenow="68" tabindex="0"><i id="knobTick"></i></div>
+      <div>
+        <div class="val" id="volVal">68</div>
+        <div class="cap2">Volume</div>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <div class="val" id="battVal">72%</div>
+        <div class="cap2">Battery</div>
+      </div>
+    </div>
+
+    <div class="rack">
+      <header><b>Card · /Music</b><b id="cnt"></b></header>
+      <ul id="list"></ul>
+    </div>
+    <div class="slot" id="slot">Drop MP3s to load · or click to simulate</div>
+  </div>
+
+  <div class="aside">
+    <div class="screenBay"><canvas id="big"></canvas></div>
+    <div class="themeList" id="themes"></div>
+    <dl class="spec">
+      <dt>Panel</dt><dd>128 × 64</dd>
+      <dt>Scale</dt><dd>×4 exact</dd>
+      <dt>Card</dt><dd id="sCard"></dd>
+      <dt>Addr</dt><dd id="sIp"></dd>
+      <dt>FW</dt><dd id="sFw"></dd>
+    </dl>
+  </div>
+</div>
+
+<script type="module">
+import { TRACKS, NOW, DEVICE, fmt } from './data.js';
+import { THEMES, render } from './oled.js';
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+let theme='terminal', tick=0, playing=true, vol=68;
+
+$('#list').innerHTML = TRACKS.map(t=>`<li ${t.title===NOW.title?'data-playing':''}>
+  <span class="i">${String(t.n).padStart(2,'0')}</span>
+  <span class="n">${t.title}<em>${t.artist}</em></span>
+  <span class="d">${fmt(t.dur)}</span></li>`).join('');
+$('#cnt').textContent = TRACKS.length + ' FILES';
+$('#sCard').textContent = DEVICE.cardUsed + ' / ' + DEVICE.cardTotal + ' GB';
+$('#sIp').textContent = DEVICE.ip;
+$('#sFw').textContent = DEVICE.fw;
+$('#rTitle').textContent = NOW.title + ' — ' + NOW.artist;
+$('#rDur').textContent = fmt(NOW.duration);
+$('#battVal').textContent = NOW.batt + '%';
+
+const holder=$('#themes');
+for (const [id,t] of Object.entries(THEMES)) {
+  const b=document.createElement('button');
+  b.className='themeBtn'; b.type='button';
+  b.setAttribute('aria-pressed', String(id===theme));
+  b.innerHTML = `<span>${t.name}</span><span>128×64</span>`;
+  b.onclick=()=>{theme=id;$$('.themeBtn').forEach((x,i)=>x.setAttribute('aria-pressed',String(Object.keys(THEMES)[i]===theme)));};
+  holder.append(b);
+}
+
+$('[data-act=play]').onclick = () => {
+  playing=!playing; NOW.state = playing?'playing':'paused';
+  $('#ppLbl').textContent = playing?'Pause':'Play';
+};
+$$('[data-toggle]').forEach(b=>b.onclick=()=>{
+  const on = b.getAttribute('aria-pressed')!=='true';
+  b.setAttribute('aria-pressed',String(on));
+  b.toggleAttribute('data-lit',on);
+  if (b.dataset.toggle==='bt'){ NOW.out = on?'bt':'jack'; $('#outMode').textContent = on?'BLUETOOTH':'JACK'; }
+});
+
+// knob: drag vertically, arrow keys work too
+const knob=$('#knob');
+const setVol=v=>{
+  vol=Math.max(0,Math.min(100,Math.round(v)));
+  NOW.volume=vol; $('#volVal').textContent=vol;
+  knob.setAttribute('aria-valuenow',vol);
+  $('#knobTick').style.transform = `rotate(${-140+vol*2.8}deg)`;
+};
+let drag=null;
+knob.addEventListener('pointerdown',e=>{drag={y:e.clientY,v:vol};knob.setPointerCapture(e.pointerId);});
+knob.addEventListener('pointermove',e=>{ if(drag) setVol(drag.v+(drag.y-e.clientY)*0.7); });
+knob.addEventListener('pointerup',()=>drag=null);
+knob.addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp'||e.key==='ArrowRight'){setVol(vol+2);e.preventDefault();}
+  if(e.key==='ArrowDown'||e.key==='ArrowLeft'){setVol(vol-2);e.preventDefault();}
+});
+setVol(vol);
+
+const slot=$('#slot');
+['dragenter','dragover'].forEach(e=>slot.addEventListener(e,ev=>{ev.preventDefault();slot.setAttribute('data-over','');}));
+['dragleave','drop'].forEach(e=>slot.addEventListener(e,ev=>{ev.preventDefault();slot.removeAttribute('data-over');}));
+slot.addEventListener('drop',ev=>{ for(const f of ev.dataTransfer.files) push(f.name); });
+slot.addEventListener('click',()=>push('Demo Track.mp3'));
+function push(name){
+  const li=document.createElement('li');
+  li.innerHTML=`<span class="i">··</span><span class="n">${name}<em>uploading</em></span><span class="d">0%</span>`;
+  $('#list').prepend(li);
+  let p=0; const iv=setInterval(()=>{ p=Math.min(100,p+9);
+    li.querySelector('.d').textContent=p+'%';
+    if(p>=100){clearInterval(iv);li.querySelector('em').textContent='ready';li.querySelector('.d').textContent='--:--';}
+  },150);
+}
+
+function frame(){
+  tick++;
+  if(playing && tick%25===0) NOW.elapsed=(NOW.elapsed+1)%NOW.duration;
+  $('#rTime').textContent=fmt(NOW.elapsed);
+  $('#rBar').style.width=(NOW.elapsed/NOW.duration*100)+'%';
+  render($('#big'), theme, NOW, tick, {scale:4,on:'#ffb02e',off:'#120d05',grid:false});
+  requestAnimationFrame(frame);
+}
+frame();
+</script>

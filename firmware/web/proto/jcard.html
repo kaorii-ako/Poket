@@ -1,0 +1,340 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Poket — J-Card</title>
+<style>
+/* J-CARD
+   The printed paper insert from a cassette case, not the plastic shell.
+   Everything is ink on card: ruled lines, registration marks, a spine, and
+   type set the way a duplication house would set it. The single spot colour
+   is seeded by whichever OLED theme the device is running, so the browser and
+   the panel visibly agree. */
+:root{
+  --card:#e7e4dc;         /* uncoated board, cool not cream */
+  --card-2:#dedad0;
+  --ink:#16150f;
+  --ink-2:#57544a;
+  --ink-3:#8e8a7d;
+  --rule:#b9b4a5;
+  --spot:#c8452f;         /* reseeded from the device theme */
+  --spot-ink:#fff;
+  --sans:ui-sans-serif,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:#3a382f;color:var(--ink);font-family:var(--sans);
+  font-size:15px;line-height:1.5;
+  padding:clamp(12px,3vw,40px);
+  display:flex;justify-content:center;
+}
+::selection{background:var(--spot);color:var(--spot-ink)}
+:focus-visible{outline:2px solid var(--spot);outline-offset:2px}
+
+.insert{
+  width:min(1080px,100%);background:var(--card);
+  /* the fold between spine and face is a real crease, printed both sides */
+  display:grid;grid-template-columns:52px 1fr;
+  box-shadow:0 1px 0 rgba(255,255,255,.5) inset, 0 18px 50px -12px rgba(0,0,0,.55);
+}
+/* --- spine ------------------------------------------------------------- */
+.spine{
+  background:var(--spot);color:var(--spot-ink);
+  border-right:1px solid rgba(0,0,0,.25);
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+  padding:14px 0;gap:12px;
+}
+.spine b{
+  writing-mode:vertical-rl;transform:rotate(180deg);
+  font-size:13px;letter-spacing:.34em;text-transform:uppercase;font-weight:700;
+}
+.spine small{
+  writing-mode:vertical-rl;transform:rotate(180deg);
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;opacity:.8;
+}
+.reg{width:13px;height:13px;position:relative;opacity:.85}
+.reg::before,.reg::after{content:"";position:absolute;background:currentColor}
+.reg::before{left:6px;top:0;width:1px;height:13px}
+.reg::after{top:6px;left:0;height:1px;width:13px}
+
+/* --- face -------------------------------------------------------------- */
+.face{padding:clamp(16px,2.6vw,30px);min-width:0}
+.masthead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+h1{
+  font-size:clamp(30px,5.2vw,52px);line-height:.92;margin:0;
+  letter-spacing:-.03em;font-weight:700;text-transform:uppercase;
+}
+h1 span{display:block;font-size:.30em;letter-spacing:.3em;font-weight:500;color:var(--ink-2);margin-top:.7em}
+.stamp{
+  border:1.5px solid var(--spot);color:var(--spot);
+  font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  padding:5px 9px;transform:rotate(-2.5deg);white-space:nowrap;
+}
+.crease{border:0;border-top:1px dashed var(--rule);margin:20px 0 0}
+
+/* --- tabs are printed, not chrome -------------------------------------- */
+nav{display:flex;gap:26px;margin:14px 0 0;flex-wrap:wrap}
+nav button{
+  appearance:none;background:none;border:0;padding:0 0 6px;cursor:pointer;
+  font:inherit;font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-3);border-bottom:2px solid transparent;
+}
+nav button:hover{color:var(--ink)}
+nav button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--spot)}
+
+section{display:none;padding-top:22px}
+section[data-on]{display:block}
+
+/* --- the tracklist IS the ruled insert ---------------------------------- */
+.side{display:flex;align-items:baseline;gap:10px;margin:0 0 8px}
+.side b{font-size:13px;letter-spacing:.26em;text-transform:uppercase}
+.side i{flex:1;border-bottom:1px solid var(--rule);transform:translateY(-3px)}
+.side em{font-family:var(--mono);font-size:11px;color:var(--ink-3);font-style:normal}
+
+ol.tracks{list-style:none;margin:0;padding:0}
+ol.tracks li{
+  display:grid;grid-template-columns:26px 1fr auto;gap:12px;align-items:baseline;
+  padding:7px 0;border-bottom:1px solid var(--rule);
+}
+ol.tracks li:hover{background:var(--card-2)}
+ol.tracks .num{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+ol.tracks .t{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ol.tracks .t b{font-weight:600}
+ol.tracks .t span{color:var(--ink-2)}
+ol.tracks .t span::before{content:" — "}
+ol.tracks .d{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+ol.tracks li[data-playing]{background:var(--card-2)}
+ol.tracks li[data-playing] .num{color:var(--spot);font-weight:700}
+
+/* --- blank side B is the dropzone: you write on it ---------------------- */
+.drop{
+  margin-top:26px;border:1.5px dashed var(--rule);background:
+    repeating-linear-gradient(var(--card) 0 27px, var(--rule) 27px 28px);
+  min-height:132px;padding:14px 16px;position:relative;
+}
+.drop[data-over]{border-color:var(--spot);background-color:#efe9df}
+.drop .hint{
+  font-family:var(--mono);font-size:12px;color:var(--ink-3);letter-spacing:.04em;
+}
+.drop .hint b{color:var(--ink-2);font-weight:600}
+.drop ul{list-style:none;margin:10px 0 0;padding:0}
+.drop li{
+  display:grid;grid-template-columns:1fr 62px 44px;gap:10px;align-items:center;
+  height:28px;font-size:13px;
+}
+.drop li .bar{height:3px;background:var(--rule);position:relative;overflow:hidden}
+.drop li .bar i{position:absolute;inset:0 auto 0 0;background:var(--spot);transition:width .25s}
+.drop li .pc{font-family:var(--mono);font-size:11px;text-align:right;color:var(--ink-2)}
+
+/* --- theme picker: the OLED shows through a die-cut window -------------- */
+.themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:14px}
+.swatch{
+  appearance:none;font:inherit;text-align:left;cursor:pointer;
+  background:var(--card);border:1px solid var(--rule);padding:10px;display:grid;gap:9px;
+}
+.swatch:hover{border-color:var(--ink-3)}
+.swatch[aria-pressed=true]{border-color:var(--spot);box-shadow:0 0 0 1px var(--spot)}
+.window{background:#0b0f14;padding:6px;display:flex;justify-content:center}
+.window canvas{display:block;image-rendering:pixelated}
+.swatch .lbl{display:flex;justify-content:space-between;align-items:baseline}
+.swatch .lbl b{font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+.swatch .lbl span{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+
+.previewRow{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start;margin-bottom:20px}
+.bigWindow{background:#0b0f14;padding:10px;border:1px solid var(--rule)}
+.bigWindow canvas{display:block;image-rendering:pixelated}
+.meta{font-family:var(--mono);font-size:11px;color:var(--ink-2);line-height:1.9}
+.meta b{color:var(--ink)}
+
+/* --- transport --------------------------------------------------------- */
+.transport{display:flex;gap:8px;align-items:center;margin-top:18px;flex-wrap:wrap}
+.key{
+  appearance:none;font:inherit;cursor:pointer;background:var(--card);
+  border:1.5px solid var(--ink);padding:8px 14px;
+  font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+}
+.key:hover{background:var(--ink);color:var(--card)}
+.key[data-primary]{background:var(--spot);border-color:var(--spot);color:var(--spot-ink)}
+.key[data-primary]:hover{filter:brightness(1.08)}
+.key svg{width:13px;height:13px;vertical-align:-2px;margin-right:7px}
+
+table.spec{border-collapse:collapse;width:100%;font-size:14px}
+table.spec th,table.spec td{text-align:left;padding:7px 0;border-bottom:1px solid var(--rule);vertical-align:baseline}
+table.spec th{width:190px;font-weight:500;color:var(--ink-2);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+table.spec td{font-family:var(--mono);font-size:13px}
+
+.note{font-size:13px;color:var(--ink-2);max-width:66ch}
+@media(max-width:620px){
+  .insert{grid-template-columns:34px 1fr}
+  .spine b{font-size:11px;letter-spacing:.24em}
+}
+</style>
+
+<div class="insert">
+  <div class="spine">
+    <span class="reg"></span>
+    <b>Poket · Side A</b>
+    <small id="spineCount">10 TRK</small>
+    <span class="reg"></span>
+  </div>
+
+  <div class="face">
+    <div class="masthead">
+      <h1>Poket<span>Portable Digital Audio</span></h1>
+      <div class="stamp" id="stamp">Hotspot · 192.168.4.1</div>
+    </div>
+    <hr class="crease">
+
+    <nav role="tablist">
+      <button role="tab" aria-selected="true" data-tab="library">Tracklist</button>
+      <button role="tab" aria-selected="false" data-tab="themes">Display</button>
+      <button role="tab" aria-selected="false" data-tab="device">Device</button>
+    </nav>
+
+    <section data-on data-panel="library">
+      <div class="side"><b>Side A</b><i></i><em id="sideTime">00:00</em></div>
+      <ol class="tracks" id="tracks"></ol>
+
+      <div class="drop" id="drop">
+        <div class="hint"><b>Side B — blank.</b> Drop MP3s here and they get written onto the lines.</div>
+        <ul id="queue"></ul>
+      </div>
+
+      <div class="transport">
+        <button class="key" data-act="prev"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12.5 3v10L5 8zM4 3v10"/></svg>Prev</button>
+        <button class="key" data-primary data-act="play"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4.5 3v10M10 3v10"/></svg><span id="ppLabel">Pause</span></button>
+        <button class="key" data-act="next"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3.5 3v10L11 8zM12 3v10"/></svg>Next</button>
+      </div>
+    </section>
+
+    <section data-panel="themes">
+      <div class="previewRow">
+        <div class="bigWindow"><canvas id="big"></canvas></div>
+        <div class="meta">
+          PANEL &nbsp;<b>SSD1306 128 × 64</b><br>
+          SCALE &nbsp;<b id="scaleTxt">×6</b> (integer, unsmoothed)<br>
+          THEME &nbsp;<b id="themeTxt">Minimal</b><br>
+          NOTE &nbsp;&nbsp;drawn from the firmware's<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;own glyph tables
+        </div>
+      </div>
+      <div class="themes" id="themes"></div>
+      <p class="note" style="margin-top:18px">The accent on this page is taken from the theme you pick, so the browser and the panel are never telling you different things.</p>
+    </section>
+
+    <section data-panel="device">
+      <table class="spec">
+        <tr><th>Firmware</th><td id="dFw"></td></tr>
+        <tr><th>Hotspot</th><td id="dSsid"></td></tr>
+        <tr><th>Address</th><td id="dIp"></td></tr>
+        <tr><th>Card</th><td id="dCard"></td></tr>
+        <tr><th>Bluetooth</th><td id="dBt"></td></tr>
+        <tr><th>Battery</th><td id="dBatt"></td></tr>
+        <tr><th>Uptime</th><td id="dUp"></td></tr>
+      </table>
+      <p class="note" style="margin-top:16px">Wi-Fi and Bluetooth share one radio. While this page is reachable, Bluetooth output is off — the device falls back to the 3.5 mm jack.</p>
+    </section>
+  </div>
+</div>
+
+<script type="module">
+import { TRACKS, NOW, DEVICE, fmt } from './data.js';
+import { THEMES, render } from './oled.js';
+
+const SPOT = { minimal:'#c8452f', anime:'#d4557e', terminal:'#3f8f52',
+               cassette:'#b8762a', brutalist:'#1d1c17', y2k:'#5a6fd0' };
+let theme = 'minimal', tick = 0, playing = true;
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+// tabs
+$$('nav button').forEach(b => b.onclick = () => {
+  $$('nav button').forEach(x => x.setAttribute('aria-selected', x === b));
+  $$('section').forEach(s => s.toggleAttribute('data-on', s.dataset.panel === b.dataset.tab));
+});
+
+// tracklist
+$('#tracks').innerHTML = TRACKS.map(t => `
+  <li ${t.title === NOW.title ? 'data-playing' : ''}>
+    <span class="num">${String(t.n).padStart(2,'0')}</span>
+    <span class="t"><b>${t.title}</b><span>${t.artist}</span></span>
+    <span class="d">${fmt(t.dur)}</span>
+  </li>`).join('');
+$('#sideTime').textContent = fmt(TRACKS.reduce((a,t)=>a+t.dur,0));
+$('#spineCount').textContent = TRACKS.length + ' TRK';
+
+// device
+$('#dFw').textContent = DEVICE.fw;
+$('#dSsid').textContent = DEVICE.ssid;
+$('#dIp').textContent = DEVICE.ip;
+$('#dCard').textContent = `${DEVICE.cardUsed} GB used of ${DEVICE.cardTotal} GB`;
+$('#dBt').textContent = DEVICE.bt;
+$('#dBatt').textContent = `${NOW.batt}%${NOW.charging ? ' — charging' : ''}`;
+$('#dUp').textContent = DEVICE.uptime;
+$('#stamp').textContent = `Hotspot · ${DEVICE.ip}`;
+
+// theme swatches
+const holder = $('#themes');
+for (const [id, t] of Object.entries(THEMES)) {
+  const b = document.createElement('button');
+  b.className = 'swatch'; b.type = 'button';
+  b.setAttribute('aria-pressed', String(id === theme));
+  b.innerHTML = `<span class="window"><canvas data-t="${id}"></canvas></span>
+                 <span class="lbl"><b>${t.name}</b><span>128×64</span></span>`;
+  b.onclick = () => { theme = id; applyTheme(); };
+  holder.append(b);
+}
+function applyTheme() {
+  document.documentElement.style.setProperty('--spot', SPOT[theme]);
+  $('#themeTxt').textContent = THEMES[theme].name;
+  $$('.swatch').forEach(s => s.setAttribute('aria-pressed',
+      String(s.querySelector('canvas').dataset.t === theme)));
+}
+applyTheme();
+
+// dropzone
+const drop = $('#drop'), queue = $('#queue');
+['dragenter','dragover'].forEach(e => drop.addEventListener(e, ev => {
+  ev.preventDefault(); drop.setAttribute('data-over',''); }));
+['dragleave','drop'].forEach(e => drop.addEventListener(e, ev => {
+  ev.preventDefault(); drop.removeAttribute('data-over'); }));
+drop.addEventListener('drop', ev => {
+  for (const f of ev.dataTransfer.files) addRow(f.name);
+});
+drop.addEventListener('click', () => addRow('Demo Track.mp3'));
+function addRow(name) {
+  const li = document.createElement('li');
+  li.innerHTML = `<span class="t">${name}</span>
+                  <span class="bar"><i style="width:0"></i></span>
+                  <span class="pc">0%</span>`;
+  queue.append(li);
+  let p = 0;
+  const iv = setInterval(() => {
+    p = Math.min(100, p + 7 + Math.random() * 9);
+    li.querySelector('i').style.width = p + '%';
+    li.querySelector('.pc').textContent = Math.round(p) + '%';
+    if (p >= 100) { clearInterval(iv); li.querySelector('.pc').textContent = 'done'; }
+  }, 160);
+}
+
+// transport
+$('[data-act=play]').onclick = () => {
+  playing = !playing;
+  NOW.state = playing ? 'playing' : 'paused';
+  $('#ppLabel').textContent = playing ? 'Pause' : 'Play';
+};
+
+// the panel, at an integer scale so one OLED pixel is exactly N device pixels
+function frame() {
+  tick++;
+  if (playing && tick % 25 === 0) NOW.elapsed = (NOW.elapsed + 1) % NOW.duration;
+  render($('#big'), theme, NOW, tick, { scale: 6, on: '#dff0ff', off: '#0b0f14' });
+  $$('.swatch canvas').forEach(c =>
+    render(c, c.dataset.t, NOW, tick, { scale: 3, on: '#dff0ff', off: '#0b0f14', grid: false }));
+  requestAnimationFrame(frame);
+}
+$('#scaleTxt').textContent = '×6';
+frame();
+</script>
