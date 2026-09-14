@@ -17,6 +17,8 @@
 | License | [`LICENSE`](../LICENSE) | MIT (code) + CERN-OHL-S v2 (hardware) |
 | Assembly instructions | [`docs/ASSEMBLY.md`](ASSEMBLY.md) | includes the Rev B parts |
 | **Firmware** | `firmware/` | **written and building** — ESP-IDF v5.3, `poket.bin` 1.5 MB, 64 % of the app partition free |
+| Flashing instructions | [`firmware/README.md`](../firmware/README.md), README | build, flash, first run, controls |
+| Design reviewed by another person | — | **not yet done** — see the README's Design review section |
 | Photos of real hardware | — | **never built** |
 
 ## The firmware
@@ -56,14 +58,22 @@ and chosen deliberately; LCSC/DigiKey numbers are blank rather than guessed.
 
 **4. Prices are estimates**, not quotes. ~$46 is the right order of magnitude.
 
-**5. Rev A was wrong about Bluetooth.** The first board used an ESP32-S3, which
+**5. Nobody else has reviewed it.** A second pair of eyes before fabrication is
+the cheapest bug-finding there is, and this design has not had one. The README
+lists what a reviewer should look at hardest.
+
+**6. Rev A was wrong about Bluetooth.** The first board used an ESP32-S3, which
 has Bluetooth LE only and physically cannot do A2DP. That is documented in
 [`DESIGN.md`](DESIGN.md) and in the devlog rather than quietly corrected — it is
 the most useful thing I learned building this.
 
 ## Is it ready?
 
-As a **design and firmware submission**: yes. Schematic, layout, fabrication
+As a **design and firmware submission**: yes, with one caveat — it has not been
+reviewed by another person, which is worth doing before anyone spends money
+having it made.
+
+On the substance: Schematic, layout, fabrication
 outputs, enclosure, and a complete firmware source tree that builds, all
 consistent with each other and all regenerated from the current revision.
 

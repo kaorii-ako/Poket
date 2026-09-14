@@ -71,6 +71,27 @@ The two smallest faces are a hand-drawn 5x8 bitmap table
 with. The rest come from real faces through
 [`tools/mkfont.py`](firmware/tools/mkfont.py).
 
+### Build and flash
+
+ESP-IDF v5.3, target `esp32`. Full detail in
+[`firmware/README.md`](firmware/README.md).
+
+```bash
+. $HOME/esp/esp-idf/export.sh
+cd firmware
+idf.py set-target esp32          # once
+idf.py build
+idf.py -p /dev/ttyUSB0 flash monitor
+```
+
+`sdkconfig.defaults` carries the flash size, PSRAM, Classic Bluetooth and the
+partition table, so a clean tree builds without menuconfig. The CP2102N bridge
+handles reset and boot mode, so flashing needs no button presses; if auto-reset
+ever fails, hold **BOOT**, tap **RESET**, release **BOOT**.
+
+Then: put MP3s in `/Music` on a FAT32 card, power on, long-press the encoder,
+join the `Poket-XXXX` network shown on screen and open **http://192.168.4.1**.
+
 ### The web app
 
 Hold the encoder and Poket brings up its own Wi-Fi access point and serves a
@@ -151,15 +172,49 @@ back.
 
 ## Status
 
-Design complete and verified in software: **ERC 0 errors, DRC 0 errors,
-0 unconnected nets, 0 schematic-parity issues**, and the enclosure booleans
-against the real board outline with zero interference.
+**Hardware** — ERC **0 errors, 0 warnings**; DRC **0 errors, 0 schematic-parity
+issues**, every signal net routed. The enclosure booleans against the real board
+STEP with **0.0000 mm³** interference. Gerbers, drill and pick-and-place in
+`fab/` are generated from this revision.
 
-Firmware is in progress: drivers, the audio path, the library scanner, the
-1-bit graphics layer and all six themes are written; the app shell and the
-Wi-Fi/HTTP layer are not finished, so **nothing has been flashed to real
-hardware yet**. See [`docs/SUBMISSION.md`](docs/SUBMISSION.md) for the honest
-gap list.
+**Firmware** — complete and building. ESP-IDF v5.3, `idf.py build` succeeds from
+a clean tree; `poket.bin` is 1.5 MB with 64 % of the app partition free. Drivers,
+the audio path with A2DP linking, microSD over SPI, the library scanner, `.m3u`
+playlists, the 1-bit graphics layer with six themes, the Wi-Fi access point, the
+HTTP server and the web app are all in `firmware/`. Build and flash instructions:
+[`firmware/README.md`](firmware/README.md).
+
+**Not built.** No board has been fabricated, no part soldered, and no firmware
+has ever run on hardware. Every image here is a render. The design is verified
+in software and the firmware compiles — but "passes DRC and builds" and "works"
+are different claims, and only the first is being made. Full gap list:
+[`docs/SUBMISSION.md`](docs/SUBMISSION.md).
+
+Three ground-pour fragments are untied, two of which carry a bypass capacitor's
+ground. Documented rather than hidden.
+
+## Design review
+
+> **Not yet reviewed by another person.** This needs a second pair of eyes
+> before fabrication, and nobody has given it one yet.
+>
+> When someone does, record it here: who reviewed it, when, what they flagged,
+> and what changed as a result. An unreviewed board is a board with exactly one
+> person's blind spots in it — and this project has already had one part choice
+> that a reviewer would very likely have caught (the ESP32-S3 cannot do A2DP,
+> which is the whole point of the device).
+
+Worth a reviewer's attention in particular:
+
+- **Power** — the MCP73831 charger, the DMG2301L load-share P-FET and the
+  AP2112K rail, especially behaviour when USB and battery are both present.
+- **The CP2102N block** — the 22.1 k/47.5 k VBUS sense divider and the
+  cross-coupled auto-reset pair (`Q2` drives EN, `Q3` drives IO0, emitters
+  cross). Both came from datasheets rather than from a copied schematic.
+- **Strapping pins** — GPIO0, 2, 12 and 15. GPIO12 is deliberately left
+  unconnected and the microSD runs on SPI to keep off it.
+- **The antenna keepout** and whether the module is close enough to the board
+  edge to radiate properly.
 
 ## License
 
