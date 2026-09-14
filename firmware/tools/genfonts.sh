@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 C=../main/ui/fonts_gen.c
-J=../web/proto/fonts.js
+J=../web/lib/fonts.js
 : > "$C"; : > "$J"
 
 gen() {   # gen <name> <spacing> <source-args...>

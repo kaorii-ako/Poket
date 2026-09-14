@@ -381,3 +381,69 @@ Still to do: the app shell, the Wi-Fi + HTTP layer, `main.c`. Nothing has been
 flashed to hardware.
 
 **Total time spent: 6 hours**
+
+# Sep 14: The S3 can't do Bluetooth audio. New MCU.
+
+Went to build the firmware for real and the compiler stopped me: `esp_bt.h`
+has no `esp32s3` directory, and `soc_caps.h` says why —
+
+```
+soc/esp32/include/soc/soc_caps.h:442:   #define SOC_BT_CLASSIC_SUPPORTED (1)
+soc/esp32s3/include/soc/soc_caps.h:551: #define SOC_BLE_SUPPORTED        (1)   <- and nothing else
+```
+
+**A2DP needs Bluetooth Classic. The ESP32-S3 has BLE only.** The headline
+feature of this thing — send audio to Bluetooth headphones — was never going to
+work on the part I picked. `CONFIG_BT_CLASSIC_ENABLED` doesn't even exist as a
+config symbol for that target.
+
+So: new MCU. **ESP32-WROOM-32E-N16R2.** Checked the Espressif datasheet properly
+this time instead of going on vibes:
+- ESP32-D0WDR2-V3, Classic BT + BLE, 16 MB flash
+- 2 MB PSRAM **inside the chip package** — so unlike a WROVER it doesn't eat
+  GPIO16/17. Only GPIO16 is gone (PSRAM), plus 6–11 for flash.
+
+Knock-on effects, all of them real work:
+
+**No native USB.** The classic ESP32 doesn't have it. Added a CP2102N-A02-GQFN24
+and the cross-coupled auto-reset pair. Read the datasheet rather than copying a
+random schematic, and it paid for itself three times:
+1. The VBUS *sense* pin must not see 5 V — abs max is VIO + 2.5 V. It needs a
+   22.1k/47.5k divider. I'd have wired it straight to VBUS.
+2. RSTb wants a **1k** pull-up to VIO, not the 10k I'd guessed.
+3. 4.7 µF **and** 0.1 µF at *every* power pin, not one pair for the chip.
+
+**The auto-reset transistors were backwards.** A blog described both emitters
+going to ground; its own truth table contradicted that. Pulled Espressif's
+DevKitC schematic and the table is right there: DTR=1,RTS=0 → EN low;
+DTR=0,RTS=1 → IO0 low; both asserted → neither. That only works cross-coupled —
+Q_EN base=DTR emitter=RTS, Q_IO0 base=RTS emitter=DTR. Which is the whole point:
+opening a serial port asserts both, and the board must *not* reset.
+
+**microSD moved from 4-bit SDIO to SPI.** On the classic ESP32 the 4-bit slot
+puts DAT2 on GPIO12 — MTDI, the flash-voltage strap. A card's internal pull-up
+holds it high at reset, tells the bootloader the flash is 1.8 V, and bricks the
+boot. Espressif's own docs say so. SPI costs bandwidth nobody needs here: 320
+kbps audio is 40 kB/s.
+
+**Dropped the battery-sense divider.** Every ADC1 pin is taken by the encoder and
+the three input-only buttons, and ADC2 stops working when Wi-Fi is on — exactly
+when the transfer screen wants to draw a battery. The BQ27441 reports voltage
+over I²C anyway.
+
+Schematic: ERC **0 errors, 0 warnings**. Verified all 20 firmware pins against
+the netlist export — no mismatches.
+
+PCB: ripped every track (none of it survives an MCU swap), swapped the footprint,
+put the bridge block on the bottom next to the USB-C, re-routed. **DRC 0 errors,
+0 schematic-parity issues, every signal net routed.** Three ground-pour fragments
+are still untied — two of them hold a bypass cap's ground. Noted, not hidden.
+
+Enclosure rebuilt against the new board: three valid single solids, and the
+boolean against the real board STEP is **0.0000 mm³** on both shells. The outline
+and every connector stayed put, so the case still fits.
+
+Two hours of that was me fighting the autorouter instead of fixing placement
+first. Routing is a placement problem.
+
+**Total time spent: 7 hours**

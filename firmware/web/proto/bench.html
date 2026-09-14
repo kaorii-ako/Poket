@@ -196,8 +196,8 @@ dl.spec dd{margin:0;color:#cfd4d8;text-align:right}
 </div>
 
 <script type="module">
-import { TRACKS, NOW, DEVICE, fmt } from './data.js';
-import { THEMES, render } from './oled.js';
+import { TRACKS, NOW, DEVICE, fmt } from '../lib/data.js';
+import { THEMES, render } from '../lib/oled.js';
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 let theme='terminal', tick=0, playing=true, vol=68;
 

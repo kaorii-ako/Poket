@@ -3,19 +3,27 @@
 A pocket Bluetooth MP3 player built around an ESP32-S3.
 
 Plays MP3s off a microSD card and sends them either to Bluetooth
-headphones (A2DP source) or out a 3.5 mm jack. 0.96" OLED, rotary
+headphones (A2DP source) or out a 3.5 mm jack.
+
+> **Rev B changed the MCU.** The board started on an ESP32-S3, which turned out
+> to have Bluetooth LE only — no BR/EDR — so A2DP could never have worked on it.
+> `soc_caps.h` in ESP-IDF spells it out: the S3 defines `SOC_BLE_SUPPORTED` and
+> not `SOC_BT_CLASSIC_SUPPORTED`. The classic ESP32 in the WROOM-32E-R2 has
+> both, keeps its 2 MB PSRAM inside the chip package (so GPIO16/17 stay free,
+> unlike a WROVER), and costs a USB-UART bridge because it has no native USB. 0.96" OLED, rotary
 encoder, three transport buttons, LiPo with USB-C charging and a
 coulomb-counting fuel gauge.
 
 | | |
 |---|---|
-| MCU | ESP32-S3-WROOM-1-N16R8 (16 MB flash, 8 MB octal PSRAM) |
-| Storage | microSD, 4-bit SDIO |
+| MCU | ESP32-WROOM-32E-N16R2 (16 MB flash, 2 MB in-package PSRAM) |
+| Storage | microSD over SPI |
 | DAC | PCM5102A (I2S, internal PLL — no MCLK needed) |
 | Headphone amp | PAM8908, charge-pump / ground-centred output |
 | Charger | MCP73831, 500 mA, P-FET load share |
 | Fuel gauge | BQ27441-G1 with 10 mΩ sense resistor |
 | Rail | AP2112K-3.3, separate ferrite-isolated 3V3A for the audio |
+| USB | CP2102N-A02 bridge + cross-coupled auto-reset (this part has no native USB) |
 | Board | 80 × 54 mm, 4 layer (Sig / solid GND / Sig / Sig) |
 | Case | 86 × 60 × 16.8 mm, 3D printed, two shells + slider cap, chamfered edges |
 

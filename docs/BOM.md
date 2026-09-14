@@ -26,13 +26,15 @@ $25 each in parts alone.
 
 | Ref | Qty | Part | Package | What it does |
 |---|---|---|---|---|
-| U1 | 1 | ESP32-S3-WROOM-1-N16R8 | SMD module | MCU + Bluetooth radio. 16 MB flash, 8 MB octal PSRAM |
+| U1 | 1 | ESP32-WROOM-32E-N16R2 | SMD module | MCU + Bluetooth radio. 16 MB flash, 2 MB in-package PSRAM. **Classic BT (BR/EDR) — the S3 has BLE only and cannot do A2DP** |
 | U4 | 1 | PCM5102APWR | TSSOP-20 | I2S stereo DAC. Internal PLL, so no MCLK line needed |
 | U5 | 1 | PAM8908JER | QFN-16 3×3 EP | Headphone amp. Charge pump gives ground-centred output — no DC blocking caps |
 | U6 | 1 | BQ27441DRZR-G1A | SON-12 2×4 mm | Coulomb-counting fuel gauge, I2C |
 | U2 | 1 | MCP73831T-2ACI/OT | SOT-23-5 | LiPo charger, 500 mA set by R3 |
 | U3 | 1 | AP2112K-3.3TRG1 | SOT-23-5 | 3.3 V 600 mA LDO with enable |
 | U7 | 1 | USBLC6-2SC6 | SOT-23-6 | USB ESD protection |
+| U8 | 1 | CP2102N-A02-GQFN24 | QFN-24 4×4 | USB-UART bridge. The classic ESP32 has no native USB |
+| Q2, Q3 | 2 | MMBT3904 | SOT-23 | Auto-reset pair, cross-coupled off DTR/RTS |
 | Q1 | 1 | DMG2301L | SOT-23 | P-FET load-share switch |
 | D3 | 1 | B5819WS | SOD-123 | Schottky, USB→VSYS |
 | D1 | 1 | WS2812B-2020 | PLCC-4 2×2 mm | Addressable status LED |

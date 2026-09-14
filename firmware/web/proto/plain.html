@@ -219,8 +219,8 @@ footer a{color:var(--ink-2)}
 </div>
 
 <script type="module">
-import { TRACKS, NOW, DEVICE, fmt } from './data.js';
-import { THEMES, render } from './oled.js';
+import { TRACKS, NOW, DEVICE, fmt } from '../lib/data.js';
+import { THEMES, render } from '../lib/oled.js';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 let theme='minimal', tick=0, playing=true, scale=6, seeking=false;
 

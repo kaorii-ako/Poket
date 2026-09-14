@@ -1,23 +1,19 @@
-// BQ27441-G1 fuel gauge, with the ADC divider as a fallback.
+// BQ27441-G1 fuel gauge.
 //
-// The gauge is the accurate source but it needs a learning cycle before its
-// state of charge means much, and it can be absent on a partly-built board. So
-// the divider on GPIO1 is always read too, and if the gauge does not answer we
-// fall back to a voltage curve. A player that shows no battery at all is worse
-// than one showing an approximate number.
+// REV B dropped the ADC divider that used to back this up: on the classic
+// ESP32 every ADC1 pin is taken by the encoder and the three input-only
+// buttons, and ADC2 stops working the moment Wi-Fi is on - which is exactly
+// when the transfer screen wants to show a battery. The gauge reports voltage
+// and current over I2C, so the divider was redundant anyway. If the gauge is
+// absent the UI shows an unknown battery rather than a wrong one.
 #include "drivers/battery.h"
 #include "drivers/i2c_bus.h"
 #include "board.h"
-#include "esp_adc/adc_oneshot.h"
-#include "esp_adc/adc_cali.h"
-#include "esp_adc/adc_cali_scheme.h"
 #include "esp_log.h"
 
 static const char *TAG = "batt";
 static i2c_master_dev_handle_t s_gauge;
 static bool s_gauge_ok;
-static adc_oneshot_unit_handle_t s_adc;
-static adc_cali_handle_t s_cali;
 
 #define BQ_VOLTAGE 0x04
 #define BQ_SOC     0x1C
@@ -37,16 +33,7 @@ esp_err_t battery_init(void) {
         uint16_t v = 0;
         s_gauge_ok = (bq_read16(BQ_VOLTAGE, &v) == ESP_OK && v > 2000 && v < 5000);
     }
-    ESP_LOGI(TAG, "fuel gauge %s", s_gauge_ok ? "present" : "absent, using divider");
-
-    adc_oneshot_unit_init_cfg_t u = { .unit_id = ADC_UNIT_1 };
-    ESP_ERROR_CHECK(adc_oneshot_new_unit(&u, &s_adc));
-    adc_oneshot_chan_cfg_t c = { .atten = ADC_ATTEN_DB_12, .bitwidth = ADC_BITWIDTH_DEFAULT };
-    ESP_ERROR_CHECK(adc_oneshot_config_channel(s_adc, ADC_CHANNEL_0, &c));   // GPIO1
-    adc_cali_curve_fitting_config_t cc = {
-        .unit_id = ADC_UNIT_1, .atten = ADC_ATTEN_DB_12, .bitwidth = ADC_BITWIDTH_DEFAULT,
-    };
-    adc_cali_create_scheme_curve_fitting(&cc, &s_cali);
+    ESP_LOGI(TAG, "fuel gauge %s", s_gauge_ok ? "present" : "absent");
     return ESP_OK;
 }
 
@@ -68,24 +55,22 @@ static uint8_t curve_pct(uint16_t mv) {
 }
 
 void battery_read(batt_t *o) {
-    int raw = 0, mv_adc = 0;
-    if (adc_oneshot_read(s_adc, ADC_CHANNEL_0, &raw) == ESP_OK && s_cali)
-        adc_cali_raw_to_voltage(s_cali, raw, &mv_adc);
-    uint16_t divider_mv = (uint16_t)(mv_adc * VBAT_DIVIDER_RATIO);
-
     o->gauge_ok = s_gauge_ok;
-    o->mv = divider_mv;
-    o->pct = curve_pct(divider_mv);
+    o->mv = 0;
+    o->pct = 0;
     o->ma = 0;
 
     if (s_gauge_ok) {
         uint16_t v, soc, cur, flags;
         if (bq_read16(BQ_VOLTAGE, &v) == ESP_OK) o->mv = v;
-        if (bq_read16(BQ_SOC, &soc) == ESP_OK && soc <= 100) o->pct = (uint8_t)soc;
+        // The gauge's own SoC needs a learning cycle before it means much, so
+        // the voltage curve stands in until it has one.
+        if (bq_read16(BQ_SOC, &soc) == ESP_OK && soc > 0 && soc <= 100) o->pct = (uint8_t)soc;
+        else o->pct = curve_pct(o->mv);
         if (bq_read16(BQ_CURRENT, &cur) == ESP_OK) o->ma = (int16_t)cur;
         if (bq_read16(BQ_FLAGS, &flags) == ESP_OK) { /* bit 0 = DSG */ }
     }
     // The charger's STAT line is not wired to the MCU, so "charging" is
-    // inferred: current flowing in, or the divider pinned high on USB power.
-    o->charging = (o->ma > 20) || (!s_gauge_ok && divider_mv > 4150);
+    // inferred from current flowing into the cell.
+    o->charging = (o->ma > 20);
 }

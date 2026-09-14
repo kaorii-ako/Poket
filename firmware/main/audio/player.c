@@ -88,11 +88,23 @@ static void player_task(void *arg) {
     for (;;) {
         if (P.state != PLAY_PLAYING || !P.f) { vTaskDelay(pdMS_TO_TICKS(20)); continue; }
 
-        if (P.want_stop) { P.want_stop = false; P.state = PLAY_STOPPED;
-                           if (P.sink) P.sink->stop(); P.sink = NULL; continue; }
-        if (P.want_next) { P.want_next = false; open_track(pick_next()); continue; }
-        if (P.want_prev) { P.want_prev = false;
-                           open_track(P.index ? P.index - 1 : 0); continue; }
+        if (P.want_stop) {
+            P.want_stop = false;
+            P.state = PLAY_STOPPED;
+            if (P.sink) P.sink->stop();
+            P.sink = NULL;
+            continue;
+        }
+        if (P.want_next) {
+            P.want_next = false;
+            open_track(pick_next());
+            continue;
+        }
+        if (P.want_prev) {
+            P.want_prev = false;
+            open_track(P.index ? P.index - 1 : 0);
+            continue;
+        }
         if (P.want_seek) {
             P.want_seek = false;
             // Byte-seek using the average bitrate. Not frame accurate, and on a
@@ -192,8 +204,6 @@ void player_set_output(audio_out_t o) {
     open_sink();
 }
 
-bool a2dp_connected(void);
-const char *a2dp_peer(void);
 
 void player_publish(app_state_t *s) {
     s->play = P.state;

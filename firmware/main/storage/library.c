@@ -43,8 +43,11 @@ static void scan_dir(const char *dir, int depth) {
     struct dirent *e;
     while ((e = readdir(d)) && s_count < LIB_MAX_TRACKS) {
         if (e->d_name[0] == '.') continue;
+        // A FAT long name can be 255 bytes; a path that would not fit gets
+        // skipped rather than silently truncated into a file that won't open.
         char path[TRACK_PATH_LEN];
-        snprintf(path, sizeof path, "%s/%s", dir, e->d_name);
+        int n = snprintf(path, sizeof path, "%s/%s", dir, e->d_name);
+        if (n < 0 || n >= (int)sizeof path) continue;
         if (e->d_type == DT_DIR) {
             scan_dir(path, depth + 1);
             continue;

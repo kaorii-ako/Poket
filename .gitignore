@@ -13,3 +13,9 @@ blender/shot_*.png
 blender/remake/
 blender/chk_*.png
 blender/cuda_probe.png
+
+# ESP-IDF build output and local config
+firmware/build/
+firmware/sdkconfig
+firmware/sdkconfig.old
+firmware/web/.shots/

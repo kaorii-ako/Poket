@@ -1,5 +1,6 @@
-# ---- Poket: ESP32-S3-WROOM-1-N16R8 (16 MB flash, 8 MB octal PSRAM) ----
-CONFIG_IDF_TARGET="esp32s3"
+# ---- Poket: ESP32-WROOM-32E-R2 (16 MB flash, 2 MB in-package PSRAM) ----
+# REV B. The S3 could not do A2DP - it has no BR/EDR radio at all.
+CONFIG_IDF_TARGET="esp32"
 
 CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
 CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
@@ -7,10 +8,10 @@ CONFIG_ESPTOOLPY_FLASHFREQ_80M=y
 CONFIG_PARTITION_TABLE_CUSTOM=y
 CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
 
-# Octal PSRAM. Decode buffers and the web upload staging area live here.
+# 2 MB PSRAM, in the SoC package on the -R2 - so unlike a WROVER it does not
+# take GPIO16/17. Decode buffers and the A2DP ring live here.
 CONFIG_SPIRAM=y
-CONFIG_SPIRAM_MODE_OCT=y
-CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_SPEED_40M=y
 CONFIG_SPIRAM_USE_MALLOC=y
 CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=4096
 CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
@@ -18,10 +19,11 @@ CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
 CONFIG_FREERTOS_HZ=1000
 CONFIG_ESP_MAIN_TASK_STACK_SIZE=6144
 
-# USB-C is wired to the native peripheral, so the console goes over it.
-CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+# No native USB on this part: the console goes out UART0 to a CP2102N.
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y
 
-# Classic Bluetooth for A2DP source. BLE is not used.
+# Classic Bluetooth for A2DP source. BLE is not used, and turning it off buys
+# back a useful chunk of RAM on a part that only has 520 kB of it.
 CONFIG_BT_ENABLED=y
 CONFIG_BT_CLASSIC_ENABLED=y
 CONFIG_BT_A2DP_ENABLE=y

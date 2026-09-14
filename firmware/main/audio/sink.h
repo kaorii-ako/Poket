@@ -2,6 +2,7 @@
 // I2S, and A2DP to a Bluetooth headset. The player does not care which.
 #pragma once
 #include <stdint.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include "esp_err.h"
 
@@ -15,3 +16,8 @@ typedef struct {
 
 extern const audio_sink_t sink_i2s;
 extern const audio_sink_t sink_a2dp;
+
+// Link status for the UI. On a part with no BR/EDR radio these always report
+// "never connected" - see the note at the top of sink_a2dp.c.
+bool        a2dp_connected(void);
+const char *a2dp_peer(void);

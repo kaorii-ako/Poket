@@ -6,6 +6,21 @@ VIA_R = pcbnew.FromMM(0.20)
 CLR   = pcbnew.FromMM(0.155)   # via edge -> other-net copper
 GCLR  = pcbnew.FromMM(0.05)
 
+
+# --- rule areas (board-level and footprint-level) ---------------------------
+KEEPOUTS = [_z.GetBoundingBox() for _z in b.Zones() if _z.GetIsRuleArea()]
+for _f in b.GetFootprints():
+    for _z in _f.Zones():
+        if _z.GetIsRuleArea():
+            KEEPOUTS.append(_z.GetBoundingBox())
+
+def in_keepout(pt, margin=0):
+    for _bb in KEEPOUTS:
+        if (_bb.GetLeft() - margin <= pt.x <= _bb.GetRight() + margin and
+                _bb.GetTop() - margin <= pt.y <= _bb.GetBottom() + margin):
+            return True
+    return False
+
 def seg_dist(px, py, x1, y1, x2, y2):
     dx, dy = x2 - x1, y2 - y1
     L2 = dx * dx + dy * dy
@@ -79,6 +94,8 @@ for rnd in range(6):
                 x += step
             y += step
         if found:
+            if in_keepout(pt, VIA_R + CLR):
+                continue
             v = pcbnew.PCB_VIA(b)
             v.SetPosition(found)
             v.SetWidth(pcbnew.FromMM(0.4)); v.SetDrill(pcbnew.FromMM(0.2))

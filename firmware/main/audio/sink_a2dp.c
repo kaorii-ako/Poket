@@ -1,11 +1,20 @@
 // A2DP source: the player pushes PCM at a Bluetooth headset.
 //
+// IMPORTANT: A2DP needs Bluetooth Classic (BR/EDR). The ESP32-S3 on this board
+// has Bluetooth LE only - soc_caps.h defines SOC_BLE_SUPPORTED but not
+// SOC_BT_CLASSIC_SUPPORTED - so on this hardware the whole sink compiles out
+// and reports ESP_ERR_NOT_SUPPORTED. See docs/SUBMISSION.md; the fix is a part
+// change, not a code change.
+//
 // The stack pulls rather than pushes, so this keeps a ring buffer that the
 // data callback drains. A2DP wants 44.1 kHz stereo; anything else gets resampled
 // upstream. If the ring runs dry the callback emits silence instead of stalling,
 // because blocking inside that callback drops the link.
 #include "audio/sink.h"
 #include "esp_log.h"
+#include "soc/soc_caps.h"
+
+#if SOC_BT_CLASSIC_SUPPORTED
 #include "freertos/FreeRTOS.h"
 #include "freertos/ringbuf.h"
 #include "esp_bt.h"
@@ -49,7 +58,7 @@ static esp_err_t start(uint32_t rate, uint8_t ch) {
     if (!s_rb) return ESP_ERR_NO_MEM;
 
     esp_bt_controller_config_t cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-    cfg.mode = ESP_BT_MODE_CLASSIC_BT;
+    
     ESP_ERROR_CHECK(esp_bt_controller_init(&cfg));
     ESP_ERROR_CHECK(esp_bt_controller_enable(ESP_BT_MODE_CLASSIC_BT));
     ESP_ERROR_CHECK(esp_bluedroid_init());
@@ -89,3 +98,21 @@ static void stop(void) {
 static void set_volume(uint8_t v) { s_vol = v > 100 ? 100 : v; }
 
 const audio_sink_t sink_a2dp = { "bluetooth", start, write_pcm, stop, set_volume };
+
+#else  /* !SOC_BT_CLASSIC_SUPPORTED */
+
+static esp_err_t start(uint32_t rate, uint8_t ch) {
+    (void)rate; (void)ch;
+    ESP_LOGE("a2dp", "this chip has Bluetooth LE only - A2DP needs BR/EDR");
+    return ESP_ERR_NOT_SUPPORTED;
+}
+static size_t write_pcm(const int16_t *pcm, size_t frames) { (void)pcm; (void)frames; return 0; }
+static void stop(void) {}
+static void set_volume(uint8_t v) { (void)v; }
+
+bool a2dp_connected(void) { return false; }
+const char *a2dp_peer(void) { return ""; }
+
+const audio_sink_t sink_a2dp = { "bluetooth", start, write_pcm, stop, set_volume };
+
+#endif

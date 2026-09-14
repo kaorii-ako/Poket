@@ -108,3 +108,8 @@ void              app_state_snapshot(app_state_t *out);
 // Mutate under the lock. Pass a function so callers cannot hold the lock.
 typedef void (*app_state_fn)(app_state_t *s, void *ctx);
 void              app_state_update(app_state_fn fn, void *ctx);
+
+// Convenience setters used from tasks that only touch one field. Pass an
+// empty name with 0 percent to clear the transfer screen's progress line.
+void              app_state_set_upload(const char *name, uint8_t pct);
+void              app_state_set_clients(uint8_t n);

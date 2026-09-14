@@ -1,5 +1,5 @@
 Section,Ref,Qty,Value,MPN,Package,Description,Est unit USD,Est ext USD
-MCU,U1,1,ESP32-S3-WROOM-1-N16R8,ESP32-S3-WROOM-1-N16R8,SMD module,Dual-core MCU + BT/WiFi radio 16MB flash 8MB octal PSRAM,4.50,4.50
+MCU,U1,1,ESP32-WROOM-32E-N16R2,ESP32-WROOM-32E-N16R2,SMD module,Dual-core MCU + Classic BT/BLE/WiFi radio 16MB flash 2MB in-package PSRAM,3.80,3.80
 Audio,U4,1,PCM5102A,PCM5102APWR,TSSOP-20,I2S stereo DAC internal PLL no MCLK needed,2.20,2.20
 Audio,U5,1,PAM8908,PAM8908JER,QFN-16 3x3 EP,Stereo headphone amp charge-pump ground-centred output,0.60,0.60
 Audio,J3,1,3.5mm TRS,SJ1-3535NG,THT horizontal,3.5mm stereo jack with switched tip for plug detect,0.60,0.60
@@ -40,3 +40,14 @@ Fabrication,-,1,PCB,JLCPCB 4-layer 80x54mm,1.6mm,Qty 5 minimum order incl shippi
 Fabrication,-,4,M2 heat-set insert,M2x4mm OD3.2,brass,Front shell bosses,0.10,0.40
 Fabrication,-,4,M2x12 screw,M2x12 pan head,steel,Back-to-front fastening,0.05,0.20
 Fabrication,-,1,Filament,PETG or PLA,~25g,Three printed parts,1.00,1.00
+USB,U8,1,CP2102N-A02-GQFN24,CP2102N-A02-GQFN24,QFN-24 4x4,USB-UART bridge with internal 3V3 regulator,1.85,1.85
+USB,Q2 Q3,2,MMBT3904,MMBT3904,SOT-23,NPN auto-reset pair driven from DTR/RTS,0.04,0.08
+USB,R34,1,22.1k,RC0603FR-0722K1L,0603,VBUS sense divider top (datasheet Fig 2.5),0.01,0.01
+USB,R35,1,47.5k,RC0603FR-0747K5L,0603,VBUS sense divider bottom,0.01,0.01
+USB,R31,1,1k,RC0603FR-071KL,0603,CP2102N RSTb pull-up to VIO,0.01,0.01
+USB,R32,1,1k,RC0603FR-071KL,0603,Series into the bridge RXD,0.01,0.01
+USB,R33,1,10k,RC0603FR-0710KL,0603,Holds the ESP RXD idle high when the bridge is unpowered,0.01,0.01
+USB,R36 R37,2,10k,RC0603FR-0710KL,0603,Auto-reset base resistors,0.01,0.02
+USB,R38,1,10k,RC0603FR-0710KL,0603,GPIO2 strap pull-down,0.01,0.01
+USB,C32 C35,2,4.7uF,CL10A475KO8NNNC,0603,Bridge bulk bypass one per power pin,0.03,0.06
+USB,C33 C34 C36,3,100nF,CL10B104KB8NNNC,0603,Bridge HF bypass one per power pin,0.01,0.03

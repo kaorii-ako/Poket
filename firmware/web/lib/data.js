@@ -21,4 +21,5 @@ export const DEVICE = {
   name: 'Poket', fw: '0.1.0', ssid: 'Poket-A4F2', ip: '192.168.4.1',
   cardTotal: 29.7, cardUsed: 4.1, uptime: '00:12:41', bt: 'not paired',
 };
-export const fmt = s => `${(s / 60) | 0}:${String((s % 60) | 0).padStart(2, '0')}`;
+export const fmt = s => `${(Math.max(0, s | 0) / 60) | 0}:`
+  + String(Math.max(0, s | 0) % 60).padStart(2, '0');

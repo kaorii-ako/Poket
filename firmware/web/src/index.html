@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en" data-skin="fab">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<title>Poket</title>
+<link rel="stylesheet" href="app.css">
+
+<div class="sheet">
+  <span class="fid tl"></span><span class="fid tr"></span>
+  <span class="fid bl"></span><span class="fid br"></span>
+  <aside class="spine"><span id="spineTxt">Poket</span></aside>
+
+  <header class="hdr">
+    <h1>Poket</h1>
+    <span class="rev" id="revTxt">Rev A</span>
+    <span class="meta" id="hdrMeta">80.00 &times; 54.00 mm &middot; 4 layer</span>
+    <div class="skins" role="group" aria-label="Page style">
+      <button type="button" data-skin-btn="fab" aria-pressed="true">Fab</button>
+      <button type="button" data-skin-btn="jcard" aria-pressed="false">J-Card</button>
+    </div>
+  </header>
+
+  <div class="cols">
+    <div class="main">
+
+      <section class="blk">
+        <h2><span>U1 &middot; Transport</span><span id="stateTxt">&mdash;</span></h2>
+        <div class="body">
+          <div class="np">
+            <div style="min-width:0">
+              <div class="t" id="npTitle">&mdash;</div>
+              <div class="a" id="npArtist"></div>
+            </div>
+            <div class="clock"><span id="npElapsed">0:00</span> / <span id="npDur">0:00</span></div>
+          </div>
+          <div class="track" id="track" role="slider" tabindex="0"
+               aria-label="Seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="trackFill"></i></div>
+          <div class="pads">
+            <button class="pad" data-act="prev"><span class="des">SW2</span>Prev</button>
+            <button class="pad primary" data-act="play"><span class="des">SW3</span><span id="ppLbl">Play</span></button>
+            <button class="pad" data-act="next"><span class="des">SW4</span>Next</button>
+            <button class="pad" data-toggle="out" aria-pressed="false"><span class="des">U4</span>Bluetooth</button>
+          </div>
+          <div class="knobs">
+            <label for="vol"><span class="des">RV1</span>Volume</label>
+            <input type="range" id="vol" min="0" max="100" value="60">
+            <output id="volOut">60</output>
+          </div>
+        </div>
+      </section>
+
+      <section class="blk">
+        <h2>
+          <span><span class="side-lbl">Side A &nbsp;</span><span class="qual">J2 &middot; microSD &middot; </span>/Music</span>
+          <span id="libCount"></span>
+        </h2>
+        <div class="libwrap">
+          <table>
+            <thead><tr>
+              <th style="width:44px">Item</th><th>Designation</th>
+              <th style="width:74px">Length</th><th style="width:62px">Rate</th><th style="width:82px">Size</th>
+            </tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="blk">
+        <h2><span><span class="side-lbl">Side B &nbsp;</span><span class="qual">J1 &middot; </span>Upload</span><span id="cardFree"></span></h2>
+        <div class="body">
+          <div class="drop" id="drop">
+            <b>Drop MP3 files here</b>
+            written straight to /Music on the card
+          </div>
+          <div class="jobs" id="jobs"></div>
+          <input type="file" id="picker" accept="audio/mpeg,.mp3" multiple hidden>
+        </div>
+      </section>
+    </div>
+
+    <div class="side">
+      <section class="blk">
+        <h2><span>DS1 &middot; SSD1306</span><span>128 &times; 64 &middot; 1 bit</span></h2>
+        <div class="body" style="padding:9px">
+          <div class="bay"><canvas id="screen" width="512" height="256"
+               role="img" aria-label="Live preview of the device screen"></canvas></div>
+          <div class="zoom">
+            <button type="button" id="zOut" aria-label="Smaller preview">&minus;</button>
+            <span id="zLbl">4&times;</span>
+            <button type="button" id="zIn" aria-label="Larger preview">+</button>
+          </div>
+        </div>
+        <div class="themes" id="themes"></div>
+      </section>
+
+      <section class="blk">
+        <h2><span class="side-lbl">Liner notes</span><span id="infoTitle">Title block</span></h2>
+        <div class="tb">
+          <div>Device</div><div id="iName">Poket</div>
+          <div>Address</div><div id="iIp">&mdash;</div>
+          <div>Network</div><div id="iSsid">&mdash;</div>
+          <div>Card</div><div id="iCard">&mdash;</div>
+          <div>Battery</div><div id="iBatt">&mdash;</div>
+          <div>Output</div><div id="iOut">&mdash;</div>
+          <div>Firmware</div><div id="iFw">&mdash;</div>
+        </div>
+        <p class="note"><b>Note 1</b> &mdash; Wi-Fi and Bluetooth share one radio.
+        While this page is being served, audio routes out the 3.5&nbsp;mm jack.</p>
+      </section>
+    </div>
+  </div>
+
+  <div class="status">
+    <span class="dot" id="connDot"></span>
+    <span id="connTxt">connecting&hellip;</span>
+    <span class="right" id="uptime"></span>
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</html>

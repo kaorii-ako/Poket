@@ -21,6 +21,22 @@ for z in b.Zones():
             zones.setdefault(l, []).append(z)
 
 CLR = pcbnew.FromMM(0.35)          # keep-away from any non-GND copper
+
+# Rule areas - notably the RF module's antenna keepout, which lives inside the
+# footprint rather than on the board - must not get stitching vias dropped in.
+KEEPOUTS = []
+for _z in b.Zones():
+    if _z.GetIsRuleArea(): KEEPOUTS.append(_z.GetBoundingBox())
+for _f in b.GetFootprints():
+    for _z in _f.Zones():
+        if _z.GetIsRuleArea(): KEEPOUTS.append(_z.GetBoundingBox())
+
+def in_keepout(pt, margin):
+    for bb in KEEPOUTS:
+        if (bb.GetLeft() - margin <= pt.x <= bb.GetRight() + margin and
+            bb.GetTop()  - margin <= pt.y <= bb.GetBottom() + margin):
+            return True
+    return False
 VIA_R = pcbnew.FromMM(0.25)
 obstacles = []                      # (bbox, is_gnd)
 for t in b.GetTracks():
@@ -55,7 +71,8 @@ while x <= x1:
     y = y0
     while y <= y1:
         pt = pcbnew.VECTOR2I(int(x), int(y))
-        if in_gnd_zone(pt, pcbnew.F_Cu) and in_gnd_zone(pt, pcbnew.In1_Cu) and clear_of_obstacles(pt):
+        if (not in_keepout(pt, VIA_R + CLR) and in_gnd_zone(pt, pcbnew.F_Cu)
+                and in_gnd_zone(pt, pcbnew.In1_Cu) and clear_of_obstacles(pt)):
             v = pcbnew.PCB_VIA(b)
             v.SetPosition(pt)
             v.SetWidth(pcbnew.FromMM(0.5)); v.SetDrill(pcbnew.FromMM(0.25))
