@@ -4,6 +4,7 @@
 #include "audio/player.h"
 #include "storage/library.h"
 #include "ui/theme.h"
+#include "audio/bt_link.h"
 
 #include "board.h"
 #include "storage/sdcard.h"
@@ -92,7 +93,9 @@ static esp_err_t get_state(httpd_req_t *r) {
     cJSON_AddStringToObject(dev, "fw", POKET_FW_VERSION);
     cJSON_AddStringToObject(dev, "ssid", s.wifi_ssid);
     cJSON_AddStringToObject(dev, "ip", s.wifi_ip);
-    cJSON_AddStringToObject(dev, "bt", s.bt_connected ? s.bt_peer : "not paired");
+    cJSON_AddStringToObject(dev, "bt", bt_link_connected() ? bt_link_peer_name()
+                        : bt_link_has_saved() ? bt_link_saved_name() : "not paired");
+    cJSON_AddBoolToObject(dev, "btLinked", bt_link_connected());
     cJSON_AddNumberToObject(dev, "clients", s.clients);
 
     // Card figures are bytes on the wire; the page formats them.
@@ -217,18 +220,83 @@ static esp_err_t post_out(httpd_req_t *r) {
     if (!cJSON_IsString(o)) { cJSON_Delete(j); return httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "out"); }
     bool bt = !strcmp(o->valuestring, "bt");
     cJSON_Delete(j);
-    // Honest failure: the radio is already serving this page, so A2DP cannot
-    // come up until transfer mode ends.
-    if (bt) {
-        // Not an error in the client's request - the radio is simply busy
-        // serving this page - so it gets a 409 rather than a 4xx-you-goofed.
+    if (bt && !bt_link_connected() && !bt_link_has_saved()) {
+        // Nothing to send audio to yet. Say so plainly instead of switching the
+        // output to a link that does not exist and going silent.
         httpd_resp_set_status(r, "409 Conflict");
         httpd_resp_set_type(r, "application/json");
-        httpd_resp_sendstr(r, "{\"ok\":false,"
-            "\"error\":\"Bluetooth is unavailable while Wi-Fi is on\"}");
+        httpd_resp_sendstr(r, "{\"ok\":false,\"error\":\"No headphones linked yet - scan and connect one first\"}");
         return ESP_OK;
     }
-    player_set_output(OUT_JACK);
+    player_set_output(bt ? OUT_BLUETOOTH : OUT_JACK);
+    httpd_resp_sendstr(r, "{\"ok\":true}");
+    return ESP_OK;
+}
+
+// ---- Bluetooth pairing --------------------------------------------------
+// Poket is the A2DP *source*, so it has to go and find the headphones: an
+// inquiry, filtered to devices that advertise the audio "rendering" service,
+// then a page and connect. Being discoverable would achieve nothing.
+
+static void bda_str(const uint8_t *b, char *out, size_t n) {
+    snprintf(out, n, "%02X:%02X:%02X:%02X:%02X:%02X",
+             b[0], b[1], b[2], b[3], b[4], b[5]);
+}
+
+static esp_err_t get_bt(httpd_req_t *r) {
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddBoolToObject(root, "up", bt_link_up());
+    cJSON_AddBoolToObject(root, "scanning", bt_link_scanning());
+    cJSON_AddBoolToObject(root, "connected", bt_link_connected());
+    cJSON_AddStringToObject(root, "peer", bt_link_peer_name());
+    cJSON_AddBoolToObject(root, "saved", bt_link_has_saved());
+    cJSON_AddStringToObject(root, "savedName", bt_link_saved_name());
+    cJSON *arr = cJSON_AddArrayToObject(root, "devices");
+    char s[20];
+    for (int i = 0; i < bt_link_count(); i++) {
+        const bt_dev_t *d = bt_link_get(i);
+        if (!d) break;
+        cJSON *o = cJSON_CreateObject();
+        bda_str(d->bda, s, sizeof s);
+        cJSON_AddStringToObject(o, "addr", s);
+        cJSON_AddStringToObject(o, "name", d->name);
+        cJSON_AddNumberToObject(o, "rssi", d->rssi);
+        cJSON_AddItemToArray(arr, o);
+    }
+    return send_json(r, root);
+}
+
+static esp_err_t post_bt_scan(httpd_req_t *r) {
+    esp_err_t err = bt_link_scan(8);
+    if (err != ESP_OK)
+        return httpd_resp_send_err(r, HTTPD_500_INTERNAL_SERVER_ERROR, esp_err_to_name(err));
+    httpd_resp_sendstr(r, "{\"ok\":true}");
+    return ESP_OK;
+}
+
+static esp_err_t post_bt_connect(httpd_req_t *r) {
+    char *body = read_body(r, 128);
+    if (!body) return httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "body");
+    cJSON *j = cJSON_Parse(body);
+    free(body);
+    if (!j) return httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "json");
+    const cJSON *idx = cJSON_GetObjectItem(j, "index");
+    esp_err_t err;
+    if (cJSON_IsNumber(idx)) {
+        err = bt_link_connect_index((int)idx->valuedouble);
+    } else {
+        err = bt_link_connect_saved();
+    }
+    cJSON_Delete(j);
+    if (err != ESP_OK)
+        return httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, esp_err_to_name(err));
+    httpd_resp_sendstr(r, "{\"ok\":true}");
+    return ESP_OK;
+}
+
+static esp_err_t post_bt_forget(httpd_req_t *r) {
+    bt_link_disconnect();
+    bt_link_forget();
     httpd_resp_sendstr(r, "{\"ok\":true}");
     return ESP_OK;
 }
@@ -365,6 +433,10 @@ static const httpd_uri_t k_routes[] = {
     { .uri = "/api/theme",         .method = HTTP_POST, .handler = post_theme },
     { .uri = "/api/theme/custom",  .method = HTTP_POST, .handler = post_theme_pack },
     { .uri = "/api/upload",        .method = HTTP_POST, .handler = post_upload },
+    { .uri = "/api/bt",            .method = HTTP_GET,  .handler = get_bt },
+    { .uri = "/api/bt/scan",       .method = HTTP_POST, .handler = post_bt_scan },
+    { .uri = "/api/bt/connect",    .method = HTTP_POST, .handler = post_bt_connect },
+    { .uri = "/api/bt/forget",     .method = HTTP_POST, .handler = post_bt_forget },
 };
 
 esp_err_t poket_httpd_start(void) {

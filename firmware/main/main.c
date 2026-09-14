@@ -15,6 +15,7 @@
 #include "storage/library.h"
 #include "storage/sdcard.h"
 #include "ui/theme.h"
+#include "audio/bt_link.h"
 
 #include "esp_log.h"
 #include "esp_err.h"
@@ -60,5 +61,12 @@ void app_main(void) {
     }
 
     ESP_ERROR_CHECK(player_init());
+
+    // If a headset was linked before, go straight back to it rather than
+    // making the user pick from a scan on every boot.
+    if (bt_link_has_saved()) {
+        ESP_LOGI(TAG, "reconnecting to %s", bt_link_saved_name());
+        bt_link_connect_saved();
+    }
     ESP_LOGI(TAG, "ready");
 }
