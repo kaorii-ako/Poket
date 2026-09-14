@@ -343,12 +343,11 @@ the firmware can't drift from the hardware. Then wrote down the stack:
 - `audio/` — minimp3 decode into one sink interface, I2S or A2DP behind it
 - `ui/` — 1-bit framebuffer + theme engine
 
-**Themes.** Six of them. The point the user asked for was "anime theme,
-minimalist theme and so on" — but on a 1-bit 128×64 panel there's no colour to
-swap, so a theme has to differ in layout, typeface, icons and motion or it's
-nothing. Minimal / Anime / Terminal / Cassette / Brutalist / Y2K. Custom
-uploads land as *data*, never code — a theme pack from a browser must not be
-able to execute on the device.
+**Themes.** Six of them. I wanted an anime theme, a minimalist one and so on —
+but on a 1-bit 128×64 panel there's no colour to swap, so a theme has to differ
+in layout, typeface, icons and motion or it's nothing. Minimal / Anime /
+Terminal / Cassette / Brutalist / Y2K. Custom uploads land as *data*, never
+code — a theme pack from a browser must not be able to execute on the device.
 
 ![themes](images/oled-themes.png)
 
