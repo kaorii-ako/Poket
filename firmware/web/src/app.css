@@ -262,6 +262,41 @@ tbody tr[data-playing] td:first-child::before{content:"\25B6";margin-right:5px;f
 .themes button .hint{color:var(--ink-3);font-size:9.5px;letter-spacing:.14em}
 .themes button[aria-pressed=true] .hint{display:none}
 
+/* ---- bluetooth --------------------------------------------------------- */
+.btLink{border:var(--edge-w) solid var(--edge);border-radius:var(--radius);
+  padding:9px 11px;margin-bottom:11px;display:grid;gap:9px}
+.btLink[hidden],#btDisconnect[hidden]{display:none}
+.btNow b{display:block;font-family:var(--font-display);font-size:15px}
+.btNow small{color:var(--ink-2)}
+.btNote{margin:9px 0 0;color:var(--ink-3);font-size:11.5px}
+.btNote[data-err]{color:var(--danger)}
+.btList{list-style:none;margin:0;padding:0;max-height:210px;overflow:auto}
+.btList li{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
+  padding:9px 11px;border-top:1px solid var(--line);font-size:13.5px}
+.btList li:hover{background:var(--sel)}
+.btList .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btList .nm small{display:block;color:var(--ink-3);font-family:var(--font-num);font-size:11px}
+/* signal strength, drawn rather than written - rssi in dBm means nothing to
+   someone just trying to pick their headphones out of a list */
+.bars{display:flex;gap:2px;align-items:flex-end;height:13px}
+.bars i{width:3px;background:var(--line);display:block}
+.bars i:nth-child(1){height:4px}
+.bars i:nth-child(2){height:7px}
+.bars i:nth-child(3){height:10px}
+.bars i:nth-child(4){height:13px}
+.bars i[data-on]{background:var(--accent)}
+.btList button{appearance:none;border:0;background:transparent;color:var(--accent);
+  box-shadow:0 0 0 var(--edge-w) var(--edge) inset;border-radius:var(--radius);
+  padding:5px 11px;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.btList button:hover{background:var(--sel)}
+.btList button:disabled{color:var(--ink-3);opacity:.6}
+.scanning{display:flex;align-items:center;gap:8px;padding:9px 11px;
+  border-top:1px solid var(--line);color:var(--ink-2);font-size:12px}
+.scanning .dotpulse{width:7px;height:7px;border-radius:50%;background:var(--accent);
+  animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.25}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.scanning .dotpulse{animation:none;opacity:.7}}
+
 /* ---- info ------------------------------------------------------------- */
 .tb{display:grid;grid-template-columns:auto 1fr;font-size:11.5px}
 .tb div{padding:5px 9px;border-bottom:1px solid var(--line)}

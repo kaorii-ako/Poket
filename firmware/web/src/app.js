@@ -31,6 +31,9 @@ const state = {
   now: { ...DEMO_NOW },
   device: { ...DEMO_DEVICE },
   tracks: DEMO_TRACKS.slice(),
+  bt: { up: false, scanning: false, connected: false, peer: '',
+        saved: false, savedName: '', devices: [] },
+  btBusy: false,
 };
 
 /* ---- api ------------------------------------------------------------- */
@@ -53,6 +56,166 @@ async function send(path, body) {
     await api(path, { method: 'POST', headers: { 'content-type': 'application/json' },
                       body: JSON.stringify(body) });
   } catch (e) { setOnline(false, 'lost the device'); }
+}
+
+// send() swallows errors because a dropped volume tick does not matter. The
+// Bluetooth actions do: "switch to headphones" failing silently is exactly the
+// bug this panel exists to avoid.
+async function post(path, body) {
+  const r = await fetch(path, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  let data = {};
+  try { data = await r.json(); } catch (e) {}
+  if (!r.ok || data.ok === false) {
+    throw new Error(data.error || `HTTP ${r.status}`);
+  }
+  return data;
+}
+
+function btNote(msg, isError) {
+  const el = $('#btNote');
+  el.textContent = msg;
+  el.toggleAttribute('data-err', !!isError);
+}
+
+// ---- bluetooth ------------------------------------------------------------
+// Poket is the A2DP source, so pairing runs the other way round from a phone:
+// it scans, filters to devices that can actually play audio, and connects out.
+const DEMO_SINKS = [
+  { addr: '38:18:4C:0A:11:92', name: 'WH-1000XM4',      rssi: -47 },
+  { addr: 'F4:4E:FD:22:07:3B', name: 'JBL Flip 5',      rssi: -68 },
+  { addr: '00:1B:66:31:9A:C4', name: 'Sennheiser HD1',  rssi: -81 },
+];
+
+async function btRefresh() {
+  if (!state.online) return;
+  try {
+    Object.assign(state.bt, await api('/api/bt'));
+    paintBt();
+  } catch (e) { /* device went away; poll() will notice */ }
+}
+
+async function btScan() {
+  if (state.btBusy) return;
+  state.btBusy = true;
+  state.bt.devices = [];
+  state.bt.scanning = true;
+  btNote('Scanning\u2026 make sure your headphones are in pairing mode.');
+  paintBt();
+
+  if (!state.online) {                       // demo: show the real flow
+    let i = 0;
+    const iv = setInterval(() => {
+      state.bt.devices.push(DEMO_SINKS[i++]);
+      paintBt();
+      if (i >= DEMO_SINKS.length) {
+        clearInterval(iv);
+        state.bt.scanning = false;
+        state.btBusy = false;
+        btNote(`Found ${DEMO_SINKS.length} device(s). Tap one to link it.`);
+        paintBt();
+      }
+    }, 700);
+    return;
+  }
+
+  try {
+    await post('/api/bt/scan');
+  } catch (e) {
+    state.bt.scanning = false;
+    state.btBusy = false;
+    btNote('Could not start the scan: ' + e.message, true);
+    paintBt();
+    return;
+  }
+  // the device scans for ~8 s; follow it until it says it has stopped
+  const until = Date.now() + 15000;
+  const tick = setInterval(async () => {
+    await btRefresh();
+    if (!state.bt.scanning || Date.now() > until) {
+      clearInterval(tick);
+      state.btBusy = false;
+      btNote(state.bt.devices.length
+        ? `Found ${state.bt.devices.length} device(s). Tap one to link it.`
+        : 'No headphones found. Put them in pairing mode and scan again.',
+        !state.bt.devices.length);
+      paintBt();
+    }
+  }, 1200);
+}
+
+async function btConnect(i) {
+  const d = state.bt.devices[i];
+  if (!d) return;
+  btNote(`Linking to ${d.name}\u2026`);
+  if (!state.online) {
+    setTimeout(() => {
+      Object.assign(state.bt, { connected: true, peer: d.name,
+                                saved: true, savedName: d.name });
+      state.now.out = 'bt';
+      btNote(`Linked. Audio now goes to ${d.name}.`);
+      paintBt(); paintChrome();
+    }, 900);
+    return;
+  }
+  try {
+    await post('/api/bt/connect', { index: i });
+    await btRefresh();
+    btNote(state.bt.connected ? `Linked to ${state.bt.peer}.`
+                              : 'Asked to link \u2014 waiting for the headset\u2026');
+  } catch (e) {
+    btNote('Could not link: ' + e.message, true);
+  }
+  paintBt();
+}
+
+async function btForget() {
+  if (state.online) {
+    try { await post('/api/bt/forget'); } catch (e) { btNote(e.message, true); }
+    await btRefresh();
+  } else {
+    Object.assign(state.bt, { connected: false, peer: '', saved: false, savedName: '' });
+    state.now.out = 'jack';
+    paintChrome();
+  }
+  btNote('Forgotten. Scan again to link a different pair.');
+  paintBt();
+}
+
+function bars(rssi) {
+  // -50 or better is right next to you; -90 is about to drop out
+  const n = rssi >= -55 ? 4 : rssi >= -70 ? 3 : rssi >= -82 ? 2 : 1;
+  return `<span class="bars" title="${rssi} dBm">` +
+    [1, 2, 3, 4].map(k => `<i ${k <= n ? 'data-on' : ''}></i>`).join('') + '</span>';
+}
+
+function paintBt() {
+  const b = state.bt;
+  $('#btState').textContent = b.connected ? 'LINKED'
+                            : b.scanning ? 'SCANNING'
+                            : b.saved ? 'REMEMBERED' : 'NOT LINKED';
+  $('#btLink').hidden = !(b.connected || b.saved);
+  if (b.connected || b.saved) {
+    $('#btPeer').textContent = b.peer || b.savedName || 'headphones';
+    $('#btPeerSub').textContent = b.connected
+      ? 'Connected \u2014 audio is going here'
+      : 'Remembered \u2014 will reconnect automatically';
+    $('#btDisconnect').hidden = !b.connected;
+  }
+  $('#btScanLbl').textContent = b.scanning ? 'Scanning\u2026' : 'Scan for headphones';
+  $('#btScan').disabled = !!b.scanning;
+
+  const list = $('#btList');
+  list.innerHTML = b.devices.map((d, i) => `<li>
+      <span class="nm">${esc(d.name)}<small>${esc(d.addr || '')}</small></span>
+      ${bars(d.rssi ?? -80)}
+      <button type="button" data-bt="${i}" ${b.connected && b.peer === d.name ? 'disabled' : ''}>
+        ${b.connected && b.peer === d.name ? 'Linked' : 'Link'}</button>
+    </li>`).join('')
+    + (b.scanning ? '<li class="scanning"><span class="dotpulse"></span>listening for devices\u2026</li>' : '');
 }
 
 async function poll() {
@@ -222,10 +385,23 @@ function wireTransport() {
   };
   $('[data-act=next]').onclick = () => { localStep(1); send('/api/transport', { action: 'next' }); };
   $('[data-act=prev]').onclick = () => { localStep(-1); send('/api/transport', { action: 'prev' }); };
-  $('[data-toggle=out]').onclick = () => {
-    state.now.out = state.now.out === 'bt' ? 'jack' : 'bt';
-    paintChrome();
-    send('/api/out', { out: state.now.out });
+  $('[data-toggle=out]').onclick = async () => {
+    const want = state.now.out === 'bt' ? 'jack' : 'bt';
+    if (!state.online) {
+      if (want === 'bt' && !state.bt.connected) {
+        btNote('No headphones linked yet \u2014 scan and link a pair first.', true);
+        return;
+      }
+      state.now.out = want; paintChrome(); return;
+    }
+    try {
+      await post('/api/out', { out: want });
+      state.now.out = want;
+      paintChrome();
+    } catch (e) {
+      // the firmware refuses with a reason when nothing is linked
+      btNote(e.message, true);
+    }
   };
 
   const vol = $('#vol');
@@ -333,12 +509,23 @@ function boot() {
   wireTransport();
   wireUpload();
   $$('[data-skin-btn]').forEach(b => b.onclick = () => setSkin(b.dataset.skinBtn));
+  $('#btScan').onclick = btScan;
+  $('#btForget').onclick = btForget;
+  $('#btDisconnect').onclick = async () => {
+    if (state.online) { try { await post('/api/bt/forget'); } catch (e) {} await btRefresh(); }
+    else { state.bt.connected = false; state.now.out = 'jack'; paintChrome(); }
+    paintBt();
+  };
+  $('#btList').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-bt]');
+    if (btn) btConnect(+btn.dataset.bt);
+  });
   $('#zIn').onclick = () => setZoom(state.scale + 1);
   $('#zOut').onclick = () => setZoom(state.scale - 1);
   addEventListener('resize', () => setZoom(state.wantScale, false));
 
-  paintChrome(); paintLibrary();
-  poll(); loadLibrary();
+  paintChrome(); paintLibrary(); paintBt();
+  poll(); loadLibrary(); btRefresh();
   setInterval(poll, 1000);
   frame();
 }

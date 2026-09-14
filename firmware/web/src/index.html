@@ -94,6 +94,33 @@
         <div class="themes" id="themes"></div>
       </section>
 
+
+      <section class="blk">
+        <h2>
+          <span><span class="qual">U1 &middot; </span>Bluetooth</span>
+          <span id="btState">&mdash;</span>
+        </h2>
+
+        <div class="body">
+          <div class="btLink" id="btLink" hidden>
+            <div class="btNow">
+              <b id="btPeer"></b>
+              <small id="btPeerSub"></small>
+            </div>
+            <div class="pads">
+              <button class="pad" id="btDisconnect">Disconnect</button>
+              <button class="pad" id="btForget">Forget</button>
+            </div>
+          </div>
+
+          <button class="pad primary" id="btScan" style="width:100%;justify-content:center">
+            <span class="des">SW1</span><span id="btScanLbl">Scan for headphones</span>
+          </button>
+          <p class="btNote" id="btNote">Put your headphones in pairing mode first.</p>
+        </div>
+
+        <ul class="btList" id="btList"></ul>
+      </section>
       <section class="blk">
         <h2><span class="side-lbl">Liner notes</span><span id="infoTitle">Title block</span></h2>
         <div class="tb">
