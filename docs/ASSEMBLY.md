@@ -24,7 +24,7 @@ VBAT and GND.
 1. **Battery disconnected**, slide switch off. Plug in USB-C.
 2. Slide switch on. Measure 3V3 at C5 — should be 3.3 V ±3 %.
 3. Check 3V3A at C7 is the same (it comes through FB1).
-4. Connect USB to a computer. The ESP32-S3 should enumerate as a USB device.
+4. Connect USB to a computer. The CP2102N should enumerate as a USB serial port.
    If not, hold BOOT (back pinhole), tap RESET, release BOOT — that forces the
    ROM bootloader.
 5. Only then connect the battery. D2 should light while charging.
@@ -73,3 +73,19 @@ See the pin map in `docs/DESIGN.md`.
 - **There's no MCLK to the DAC.** Configure I2S accordingly or you'll get silence.
 - **R24 is a 0.01 Ω sense resistor**, not a jumper. Fitting a 0 Ω here breaks
   the fuel gauge.
+
+
+## Rev B additions
+
+Populate these along with the rest of the top side:
+
+- **U8 (CP2102N-A02-GQFN24)** — USB-UART bridge, QFN-24. Pin 1 dot faces the
+  board's bottom-left. Bottom side, next to the USB-C connector.
+- **Q2, Q3 (MMBT3904)** — auto-reset pair. They are *not* interchangeable with
+  each other's positions: Q2 drives EN, Q3 drives IO0, and the emitters cross.
+- **R34 22.1k / R35 47.5k** — the VBUS sense divider. Getting these the wrong way
+  round puts 5 V on a 3.3 V pin.
+- **R31 1k** — RSTb pull-up. Not 10k.
+
+First power-up: the board should enumerate as a CP2102N USB serial port. If it
+does not, check R34/R35 orientation before anything else.

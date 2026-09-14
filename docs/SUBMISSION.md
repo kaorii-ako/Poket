@@ -4,51 +4,69 @@
 
 | Requirement | Where | Status |
 |---|---|---|
-| Devlog / journal | [`JOURNAL.md`](../JOURNAL.md) | ✅ 9 entries, ~27 h, written as the work happened |
-| Schematic (source) | `poket.kicad_sch` | ✅ KiCad 10, ERC **0 errors 0 warnings** |
-| Schematic (PDF) | [`docs/poket-schematic.pdf`](poket-schematic.pdf) | ✅ |
-| PCB layout (source) | `poket.kicad_pcb` | ✅ DRC **0 errors, 0 unconnected, 0 parity** |
-| Gerbers + drill | `fab/poket-gerbers.zip` | ✅ 4-layer, JLCPCB-ready |
-| Pick-and-place | `fab/poket-pos.csv` | ✅ |
-| BOM with costs | [`docs/BOM.md`](BOM.md), [`docs/BOM.csv`](BOM.csv) | ⚠️ costs are **estimates**; supplier P/Ns not filled in |
-| CAD source | `cad/enclosure.py`, `cad/poket-enclosure.FCStd` | ✅ parametric, rebuilds from the script |
-| Printable files | `enclosure/*.stl` | ✅ 3 parts, all single valid solids |
-| Renders / video | `images/`, `video/` | ✅ |
-| License | [`LICENSE`](../LICENSE) | ✅ MIT (code) + CERN-OHL-S v2 (hardware) |
-| Assembly instructions | [`docs/ASSEMBLY.md`](ASSEMBLY.md) | ✅ |
-| Firmware | — | ❌ **not written** |
-| Photos of real hardware | — | ❌ **never built** |
+| Devlog / journal | [`JOURNAL.md`](../JOURNAL.md) | 11 entries, ~34 h, written as the work happened |
+| Schematic (source) | `poket.kicad_sch` | KiCad 10, ERC **0 errors, 0 warnings** |
+| Schematic (PDF / PNG) | [`docs/poket-schematic.pdf`](poket-schematic.pdf), `images/schematic.png` | regenerated from the Rev B board |
+| PCB layout (source) | `poket.kicad_pcb` | DRC **0 errors, 0 schematic-parity issues**, every signal net routed |
+| Gerbers + drill | `fab/poket-gerbers.zip` | 4-layer, JLCPCB-ready, Rev B |
+| Pick-and-place | `fab/poket-pos.csv` | Rev B |
+| BOM with costs | [`docs/BOM.md`](BOM.md), [`docs/BOM.csv`](BOM.csv) | costs are **estimates**; supplier P/Ns not filled in |
+| CAD source | `cad/enclosure.py` | parametric, rebuilds from the script |
+| Printable files | `enclosure/*.stl` | 3 parts, all single valid solids, 0.0000 mm³ interference vs the board |
+| Renders / video | `images/`, `video/` | board renders regenerated for Rev B |
+| License | [`LICENSE`](../LICENSE) | MIT (code) + CERN-OHL-S v2 (hardware) |
+| Assembly instructions | [`docs/ASSEMBLY.md`](ASSEMBLY.md) | includes the Rev B parts |
+| **Firmware** | `firmware/` | **written and building** — ESP-IDF v5.3, `poket.bin` 1.5 MB, 64 % of the app partition free |
+| Photos of real hardware | — | **never built** |
+
+## The firmware
+
+ESP-IDF v5.3, target `esp32`. `idf.py build` succeeds from a clean tree.
+
+- **Audio** — vendored minimp3, one sink interface behind I2S (PCM5102A) and
+  A2DP source. Bluetooth linking is implemented properly: inquiry, Class-of-
+  Device filter for audio sinks, connect, then `CHECK_SRC_RDY` → `MEDIA_CTRL_START`.
+  The headset is remembered in NVS and reconnected at boot.
+- **Storage** — microSD over SPI, library scan, ID3 tags, playlists as `.m3u`
+  files in `/Music/Playlists` so any other player can read them.
+- **UI** — 1-bit graphics layer and six themes that differ in layout, type,
+  iconography and motion, because a 1-bit panel has no colour to vary. Custom
+  theme packs are interpreted as *data*, never executed.
+- **Web app** — served gzipped from rodata, 30 kB, no external requests. Upload,
+  library with search, playlists, transport, shuffle/repeat, Bluetooth pairing,
+  and a live 128×64 screen preview that runs the firmware's own drawing code
+  against the same glyph bytes.
 
 ## Honest gaps
 
-**1. There is no firmware.** The board is designed to run ESP-IDF with
-`esp_a2dp_source`, SDMMC 4-bit, I2S TX and I2C, and the pin map is chosen for
-that, but not a line of it exists. Nothing here has been proven to play audio.
+**1. Nothing has been physically built.** Every image is a render. No board has
+been fabricated, no part soldered, no measurement taken, and no firmware has
+ever run on hardware. The design is ERC/DRC-clean, the enclosure is
+boolean-verified against the real board outline, and the firmware compiles — but
+"it passes DRC and builds" and "it works" are very different claims, and only
+the first is being made here.
 
-**2. Nothing has been physically built.** Every image is a render. No board has
-been fabricated, no part soldered, no measurement taken. The design is
-DRC/ERC-clean and the enclosure is boolean-verified against the real board
-outline, but "it passes DRC" and "it works" are very different claims.
+**2. Three ground-pour fragments are untied.** Two of them carry a bypass
+capacitor's ground (C19, C33). The plane itself is intact and every signal net
+is routed, but those two caps' ground return is not ideal. The fix is to move
+the caps and re-route; noted rather than hidden.
 
 **3. The BOM has no supplier part numbers.** Manufacturer part numbers are real
-and chosen deliberately; LCSC/DigiKey numbers are deliberately blank rather than
-guessed. Fill them in before ordering.
+and chosen deliberately; LCSC/DigiKey numbers are blank rather than guessed.
 
-**4. Prices are estimates from memory**, not quotes. The ~$46 total is the right
-order of magnitude, not a number to budget against precisely.
+**4. Prices are estimates**, not quotes. ~$46 is the right order of magnitude.
+
+**5. Rev A was wrong about Bluetooth.** The first board used an ESP32-S3, which
+has Bluetooth LE only and physically cannot do A2DP. That is documented in
+[`DESIGN.md`](DESIGN.md) and in the devlog rather than quietly corrected — it is
+the most useful thing I learned building this.
 
 ## Is it ready?
 
-**For a "fund my PCB" style submission — yes.** The deliverable those ask for is
-a complete, manufacturable design with a real BOM and an honest build log, and
-that's all here and verifiable: the gerbers will fab, the parts exist, the case
-fits the board.
+As a **design and firmware submission**: yes. Schematic, layout, fabrication
+outputs, enclosure, and a complete firmware source tree that builds, all
+consistent with each other and all regenerated from the current revision.
 
-**For a "here is my finished working project" submission — no.** No firmware and
-no physical build means the core claim is untested.
-
-### Shortest path to closing the gap
-
-1. Fill in supplier part numbers, order boards + parts (~2–3 weeks lead time).
-2. Write firmware while they ship — SD read → I2S → DAC first, Bluetooth after.
-3. Build one, photograph it, log what broke.
+As a **working device**: no, and it does not claim to be. It has never been
+built. Everything above describes what the design and the code do, not what a
+physical unit has been observed to do.

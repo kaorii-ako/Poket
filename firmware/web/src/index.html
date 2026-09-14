@@ -52,9 +52,33 @@
 
       <section class="blk">
         <h2>
-          <span><span class="side-lbl">Side A &nbsp;</span><span class="qual">J2 &middot; microSD &middot; </span>/Music</span>
+          <span><span class="side-lbl">Mixtapes &nbsp;</span><span class="qual">J2 &middot; </span>Playlists</span>
+          <span id="plCount"></span>
+        </h2>
+        <div class="plbar">
+          <input type="text" id="plNew" placeholder="New playlist name" maxlength="32"
+                 autocomplete="off">
+          <button class="pad" id="plCreate">Create</button>
+        </div>
+        <ul class="plList" id="plList"></ul>
+      </section>
+
+      <section class="blk">
+        <h2>
+          <span><span class="side-lbl">Side A &nbsp;</span><span class="qual">J2 &middot; microSD &middot; </span><span id="libTitle">/Music</span></span>
           <span id="libCount"></span>
         </h2>
+        <div class="libbar">
+          <input type="search" id="search" placeholder="Search title or artist"
+                 autocomplete="off" spellcheck="false">
+          <button class="pad" id="bShuffle" aria-pressed="false" title="Shuffle">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M17 3l4 4-4 4V8h-2.6l-2.2 3-1.2-1.7L13.2 6H17V3zM3 6h4.2l6 8.5H17V12l4 4-4 4v-3h-5.2L5.8 8H3V6zm0 10h4.2l1.6-2.3 1.2 1.7L8 18H3v-2z"/></svg>
+          </button>
+          <button class="pad" id="bRepeat" data-mode="off" title="Repeat">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+            <span id="repeatLbl">Off</span>
+          </button>
+        </div>
         <div class="libwrap">
           <table>
             <thead><tr>

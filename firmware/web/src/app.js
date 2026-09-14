@@ -5,6 +5,7 @@
 // demo library so the page is still a working thing to look at rather than a
 // wall of dashes.
 import { THEMES, render } from '../lib/oled.js';
+import { makeClock } from '../lib/clock.js';
 import { TRACKS as DEMO_TRACKS, NOW as DEMO_NOW, DEVICE as DEMO_DEVICE, fmt } from '../lib/data.js';
 
 const $ = s => document.querySelector(s);
@@ -34,6 +35,13 @@ const state = {
   bt: { up: false, scanning: false, connected: false, peer: '',
         saved: false, savedName: '', devices: [] },
   btBusy: false,
+  // Playback position is kept as "elapsed E at wall-clock T" and interpolated,
+  // never counted in animation frames. The old code advanced a second every 25
+  // rAF ticks, which at 60 Hz ran the clock 2.4x too fast.
+  playlists: [],
+  openPl: null,          // playlist being viewed, null = whole library
+  plTracks: [],
+  query: '',
 };
 
 /* ---- api ------------------------------------------------------------- */
@@ -221,7 +229,12 @@ function paintBt() {
 async function poll() {
   try {
     const s = await api('/api/state');
+    const wasPlaying = state.now.state;
     Object.assign(state.now, s.now || {});
+    // The device reports once a second; snapping the clock to every reply would
+    // make the readout stutter. Only resync on real drift or a state change.
+    if (Math.abs(state.now.elapsed - elapsedNow()) > 1.2 || state.now.state !== wasPlaying)
+      setClock(state.now.elapsed);
     Object.assign(state.device, s.device || {});
     if (s.theme && THEMES[s.theme] && s.theme !== state.theme) selectTheme(s.theme, false);
     setOnline(true);
@@ -241,15 +254,38 @@ async function loadLibrary() {
 }
 
 /* ---- chrome ----------------------------------------------------------- */
+// ---- transport clock ------------------------------------------------------
+// The arithmetic lives in lib/clock.js so it can be unit-tested without a
+// browser; see lib/clock.test.mjs.
+const clock = makeClock();
+function setClock(elapsed) {
+  clock.set(elapsed, state.now.state === 'playing', state.now.duration);
+}
+function elapsedNow() { return clock.get(); }
+
+// Called every frame: the bar moves smoothly, the readout only when the whole
+// second changes, so the text is not repainted 60 times a second.
+let lastShownSecond = -1;
+function paintClock() {
+  const n = state.now;
+  const e = elapsedNow();
+  const pct = n.duration ? Math.min(100, e / n.duration * 100) : 0;
+  $('#trackFill').style.width = pct.toFixed(2) + '%';
+  const sec = Math.floor(e);
+  if (sec !== lastShownSecond) {
+    lastShownSecond = sec;
+    $('#npElapsed').textContent = fmt(sec);
+    $('#track').setAttribute('aria-valuenow', Math.round(pct));
+  }
+  // offline the track has to roll over by itself
+  if (!state.online && clock.ended()) localStep(1);
+}
+
 function paintChrome() {
   const n = state.now, d = state.device;
   $('#npTitle').textContent = n.title || 'Nothing queued';
   $('#npArtist').textContent = n.artist || '';
-  $('#npElapsed').textContent = fmt(n.elapsed);
   $('#npDur').textContent = fmt(n.duration);
-  const pct = n.duration ? Math.min(100, n.elapsed / n.duration * 100) : 0;
-  $('#trackFill').style.width = pct + '%';
-  $('#track').setAttribute('aria-valuenow', Math.round(pct));
   $('#stateTxt').textContent = (n.state || 'stopped').toUpperCase();
   $('#ppLbl').textContent = n.state === 'playing' ? 'Pause' : 'Play';
   $('[data-toggle=out]').setAttribute('aria-pressed', String(n.out === 'bt'));
@@ -268,24 +304,88 @@ function paintChrome() {
   $('#volOut').value = n.volume ?? 60;
 }
 
+function visibleTracks() {
+  const src = state.openPl ? state.plTracks : state.tracks;
+  const q = state.query.trim().toLowerCase();
+  if (!q) return src;
+  return src.filter(t => (t.title + ' ' + (t.artist || '')).toLowerCase().includes(q));
+}
+
 function paintLibrary() {
-  const t = state.tracks;
-  $('#libCount').textContent = t.length ? `${t.length} items` : '';
-  // a half-visible row at the fold reads as a clipping bug; fade it instead
-  requestAnimationFrame(() => {
-    const w = $('.libwrap');
-    w.toggleAttribute('data-more', w.scrollHeight > w.clientHeight + 2);
-  });
-  $('#rows').innerHTML = t.length ? t.map((x, i) => `<tr data-i="${i}" ${
-      x.title === state.now.title ? 'data-playing' : ''}>
+  const all = state.openPl ? state.plTracks : state.tracks;
+  const t = visibleTracks();
+  $('#libTitle').textContent = state.openPl ? state.openPl : '/Music';
+  $('#libCount').textContent = state.query && t.length !== all.length
+    ? `${t.length} of ${all.length}` : (all.length ? `${all.length} items` : '');
+
+  $('#rows').innerHTML = t.length ? t.map((x) => {
+    const i = all.indexOf(x);
+    return `<tr data-i="${i}" ${x.title === state.now.title ? 'data-playing' : ''}>
     <td class="num">${String(x.n ?? i + 1).padStart(2, '0')}</td>
     <td>${esc(x.title)}<span class="by">${esc(x.artist || '')}</span></td>
     <td class="num">${fmt(x.dur)}</td>
     <td class="num">${x.kbps ? x.kbps + 'k' : ''}</td>
-    <td class="num">${x.size != null ? (+x.size).toFixed(1) + ' MB' : ''}</td></tr>`).join('')
-    : `<tr><td colspan="5" style="color:var(--ink-3);padding:22px;text-align:center">
-       Card is empty — drop some MP3s below</td></tr>`;
+    <td class="num"><span class="rowacts">${state.openPl
+        ? `<button data-act="plremove" data-i="${i}" title="Remove from this playlist">&minus;</button>`
+        : `<button data-act="plopen" data-i="${i}" title="Add to a playlist">+</button>`}
+      <button class="del" data-act="del" data-i="${i}" title="Delete from the card">\u00d7</button>
+    </span></td></tr>`;
+  }).join('')
+    : `<tr><td colspan="5" style="color:var(--ink-3);padding:22px;text-align:center">${
+        state.query ? 'Nothing matches &ldquo;' + esc(state.query) + '&rdquo;'
+        : state.openPl ? 'This playlist is empty &mdash; add tracks from /Music'
+        : 'Card is empty &mdash; drop some MP3s below'}</td></tr>`;
+
+  requestAnimationFrame(() => {
+    const w = $('.libwrap');
+    w.toggleAttribute('data-more', w.scrollHeight > w.clientHeight + 2);
+  });
 }
+
+// ---- playlists ------------------------------------------------------------
+async function loadPlaylists() {
+  if (state.online) {
+    try { state.playlists = (await api('/api/playlists')).playlists || []; }
+    catch (e) { /* keep what we have */ }
+  }
+  paintPlaylists();
+}
+
+function paintPlaylists() {
+  $('#plCount').textContent = state.playlists.length
+    ? `${state.playlists.length}` : '';
+  const host = $('#plList');
+  host.innerHTML = state.playlists.length ? state.playlists.map(p => `
+    <li data-pl="${esc(p.name)}" ${state.openPl === p.name ? 'aria-current="true"' : ''}>
+      <span class="pn">${esc(p.name)}</span>
+      <span class="pc">${p.count} track${p.count === 1 ? '' : 's'}</span>
+      <button data-plact="play" data-pl="${esc(p.name)}">Play</button>
+      <button data-plact="del"  data-pl="${esc(p.name)}">Delete</button>
+    </li>`).join('')
+    : '<li class="plEmpty">No playlists yet. Name one above and hit Create.</li>';
+}
+
+async function openPlaylist(name) {
+  if (state.openPl === name) { state.openPl = null; state.plTracks = []; }
+  else {
+    state.openPl = name;
+    if (state.online) {
+      try { state.plTracks = (await api('/api/playlist?name=' + encodeURIComponent(name))).tracks || []; }
+      catch (e) { state.plTracks = []; }
+    } else {
+      const pl = state.playlists.find(p => p.name === name);
+      state.plTracks = (pl && pl.tracks) || [];
+    }
+  }
+  paintPlaylists(); paintLibrary();
+}
+
+async function plAction(action, body) {
+  if (!state.online) return true;                 // demo mode mutates locally
+  try { await post('/api/playlist', { action, ...body }); return true; }
+  catch (e) { btNote('Playlist: ' + e.message, true); return false; }
+}
+
 const esc = s => String(s ?? '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
 
 /* ---- skins ------------------------------------------------------------ */
@@ -355,8 +455,10 @@ function setZoom(v, persist = true) {
 }
 function frame() {
   state.tick++;
-  if (!state.online && state.now.state === 'playing' && !state.seeking && state.tick % 25 === 0)
-    state.now.elapsed = (state.now.elapsed + 1) % (state.now.duration || 1);
+  if (!state.seeking) {
+    state.now.elapsed = elapsedNow();     // the OLED preview draws from this
+    paintClock();
+  }
   const cs = getComputedStyle(document.documentElement);
   render($('#screen'), state.theme, state.now, state.tick, {
     scale: state.scale,
@@ -364,7 +466,6 @@ function frame() {
     off: cs.getPropertyValue('--screen-off').trim() || '#04110c',
     grid: false,
   });
-  if (!state.online && state.tick % 25 === 0) paintChrome();
   requestAnimationFrame(frame);
 }
 
@@ -375,6 +476,7 @@ function localStep(d) {
   if (!t) return;
   Object.assign(state.now, { title: t.title, artist: t.artist, duration: t.dur,
                              bitrate: t.kbps, elapsed: 0, pos: t.n });
+  setClock(0);
   paintChrome(); paintLibrary();
 }
 function wireTransport() {
@@ -415,7 +517,8 @@ function wireTransport() {
     const r = track.getBoundingClientRect();
     const f = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
     state.now.elapsed = Math.round(f * state.now.duration);
-    paintChrome();
+    setClock(state.now.elapsed);
+    paintClock();
     send('/api/transport', { action: 'seek', value: state.now.elapsed });
   };
   track.addEventListener('pointerdown', e => { state.seeking = true; seekTo(e.clientX); });
@@ -425,19 +528,127 @@ function wireTransport() {
     const d = e.key === 'ArrowRight' ? 5 : e.key === 'ArrowLeft' ? -5 : 0;
     if (!d) return;
     e.preventDefault();
-    state.now.elapsed = Math.max(0, Math.min(state.now.duration, state.now.elapsed + d));
-    paintChrome();
+    state.now.elapsed = Math.max(0, Math.min(state.now.duration, elapsedNow() + d));
+    setClock(state.now.elapsed);
+    paintClock();
     send('/api/transport', { action: 'seek', value: state.now.elapsed });
   });
 
-  $('#rows').addEventListener('click', e => {
+  $('#rows').addEventListener('click', async e => {
+    const act = e.target.closest('button[data-act]');
+    if (act) {
+      e.stopPropagation();
+      const i = +act.dataset.i;
+      const src = state.openPl ? state.plTracks : state.tracks;
+      const t = src[i];
+      if (!t) return;
+      if (act.dataset.act === 'del') {
+        if (!confirm(`Delete "${t.title}" from the card? This cannot be undone.`)) return;
+        if (state.online) {
+          try { await post('/api/delete', { path: t.path }); } catch (err) { btNote(err.message, true); return; }
+          await loadLibrary();
+        } else {
+          state.tracks = state.tracks.filter(x => x !== t);
+        }
+        paintLibrary();
+      } else if (act.dataset.act === 'plopen') {
+        if (!state.playlists.length) { btNote('Create a playlist first.', true); return; }
+        const name = prompt('Add to which playlist?\n\n' +
+                            state.playlists.map(p => '\u2022 ' + p.name).join('\n'),
+                            state.playlists[0].name);
+        if (!name) return;
+        if (await plAction('add', { name, path: t.path || t.title })) {
+          const pl = state.playlists.find(p => p.name === name);
+          if (pl) { pl.count++; (pl.tracks = pl.tracks || []).push(t); }
+          paintPlaylists();
+          if (state.openPl === name) openPlaylist(name), openPlaylist(name);
+        }
+      } else if (act.dataset.act === 'plremove') {
+        if (await plAction('removeAt', { name: state.openPl, index: i })) {
+          state.plTracks.splice(i, 1);
+          const pl = state.playlists.find(p => p.name === state.openPl);
+          if (pl) pl.count = state.plTracks.length;
+          paintPlaylists(); paintLibrary();
+        }
+      }
+      return;
+    }
     const tr = e.target.closest('tr[data-i]');
     if (!tr) return;
-    const t = state.tracks[+tr.dataset.i];
+    const src = state.openPl ? state.plTracks : state.tracks;
+    const t = src[+tr.dataset.i];
+    if (!t) return;
     Object.assign(state.now, { title: t.title, artist: t.artist, duration: t.dur,
                                bitrate: t.kbps, elapsed: 0, state: 'playing', pos: t.n });
+    setClock(0);
     paintChrome(); paintLibrary();
-    send('/api/transport', { action: 'play', path: t.path || t.title });
+    if (state.openPl) {
+      send('/api/playlist', { action: 'play', name: state.openPl, start: +tr.dataset.i });
+    } else {
+      send('/api/transport', { action: 'play', path: t.path || t.title });
+    }
+  });
+
+  // search
+  $('#search').addEventListener('input', e => {
+    state.query = e.target.value;
+    paintLibrary();
+  });
+
+  // shuffle / repeat
+  $('#bShuffle').onclick = () => {
+    state.now.shuffle = !state.now.shuffle;
+    $('#bShuffle').setAttribute('aria-pressed', String(state.now.shuffle));
+    send('/api/mode', { shuffle: state.now.shuffle });
+  };
+  const REPEATS = ['off', 'all', 'one'];
+  $('#bRepeat').onclick = () => {
+    const next = REPEATS[(REPEATS.indexOf(state.now.repeat || 'off') + 1) % 3];
+    state.now.repeat = next;
+    $('#bRepeat').dataset.mode = next;
+    $('#bRepeat').setAttribute('aria-pressed', String(next !== 'off'));
+    $('#repeatLbl').textContent = next === 'one' ? 'One' : next === 'all' ? 'All' : 'Off';
+    send('/api/mode', { repeat: next });
+  };
+
+  // playlists
+  $('#plCreate').onclick = async () => {
+    const name = $('#plNew').value.trim();
+    if (!name) return;
+    if (state.playlists.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+      btNote('A playlist called that already exists.', true); return;
+    }
+    if (await plAction('create', { name })) {
+      state.playlists.push({ name, count: 0, tracks: [] });
+      $('#plNew').value = '';
+      paintPlaylists();
+    }
+  };
+  $('#plNew').addEventListener('keydown', e => { if (e.key === 'Enter') $('#plCreate').click(); });
+  $('#plList').addEventListener('click', async e => {
+    const btn = e.target.closest('button[data-plact]');
+    const name = (btn || e.target.closest('li[data-pl]'))?.dataset.pl;
+    if (!name) return;
+    if (!btn) return openPlaylist(name);
+    if (btn.dataset.plact === 'play') {
+      if (await plAction('play', { name, start: 0 })) {
+        const pl = state.playlists.find(p => p.name === name);
+        const first = (pl && pl.tracks && pl.tracks[0]) || null;
+        if (first) {
+          Object.assign(state.now, { title: first.title, artist: first.artist,
+                                     duration: first.dur, elapsed: 0, state: 'playing' });
+          setClock(0); paintChrome(); paintLibrary();
+        }
+        btNote(`Playing "${name}".`);
+      }
+    } else if (btn.dataset.plact === 'del') {
+      if (!confirm(`Delete the playlist "${name}"? The tracks stay on the card.`)) return;
+      if (await plAction('delete', { name })) {
+        state.playlists = state.playlists.filter(p => p.name !== name);
+        if (state.openPl === name) { state.openPl = null; state.plTracks = []; }
+        paintPlaylists(); paintLibrary();
+      }
+    }
   });
 }
 
@@ -524,8 +735,9 @@ function boot() {
   $('#zOut').onclick = () => setZoom(state.scale - 1);
   addEventListener('resize', () => setZoom(state.wantScale, false));
 
+  setClock(state.now.elapsed);
   paintChrome(); paintLibrary(); paintBt();
-  poll(); loadLibrary(); btRefresh();
+  poll(); loadLibrary(); btRefresh(); loadPlaylists();
   setInterval(poll, 1000);
   frame();
 }

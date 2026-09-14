@@ -2,7 +2,7 @@
 
 ## What it is
 
-An ESP32-S3 Bluetooth MP3 player. Local MP3s on a microSD card, played
+An ESP32 Bluetooth MP3 player. Local MP3s on a microSD card, played
 out either over Bluetooth A2DP (as a *source*, to headphones/speakers) or
 through a wired 3.5 mm jack. 0.96" OLED, rotary encoder with push, three
 transport buttons, single-cell LiPo with USB-C charging.
@@ -11,11 +11,11 @@ transport buttons, single-cell LiPo with USB-C charging.
 
 ## Electrical
 
-### MCU — ESP32-S3-WROOM-1-N16R8, not a bare chip
+### MCU — ESP32-WROOM-32E-N16R2, not a bare chip
 The module costs a few dollars more than the bare die plus flash plus
 PSRAM, and it saves the antenna matching network, the RF layout review,
 and a pile of risk on a first spin. 16 MB flash gives room for the
-firmware and a filesystem; 8 MB octal PSRAM gives the decode buffers you
+firmware and a filesystem; 2 MB in-package PSRAM gives the decode buffers you
 want if you ever add gapless playback or a bigger UI.
 
 Cost: the octal-PSRAM variant burns GPIO35/36/37 internally, so those are
@@ -54,7 +54,7 @@ ground).
 
 ### Power path
 ```
-USB-C ──┬── USBLC6 ESD ── D+/D- ── ESP32-S3
+USB-C ──┬── USBLC6 ESD ── D+/D- ── CP2102N ── UART0 ── ESP32
         ├── MCP73831 (500 mA) ── VBAT ── LiPo
         └── Schottky ──┐
                        ├── VSYS ── slide switch on LDO EN ── AP2112K-3.3 ── 3V3
@@ -75,14 +75,14 @@ without it (hard on).
 cell and be ~90 % efficient instead of ~80 %. An AP2112K is a $0.10
 SOT-23-5 and a basic JLC part. For a first build I took the simple one and
 accepted that the usable cell range stops around 3.4 V. The board will
-run below that (the ESP32-S3 and both audio parts are happy at 3.0 V),
+run below that (the ESP32 and both audio parts are happy at 3.0 V),
 the rail just isn't regulated any more.
 
 **Analog rail.** 3V3A is split off through a ferrite bead with its own
 bulk + bypass, feeding the DAC and amp only. Cheap insurance against the
 radio and the SD card putting hash into the audio.
 
-### microSD on 4-bit SDIO, not SPI
+### microSD on SPI, not SPI
 Four data lines instead of one, roughly 4× the read bandwidth for the
 same clock. MP3 doesn't need it, but it means the card is idle more of
 the time, which matters when the radio is also asking for the bus. 10 k
@@ -101,7 +101,7 @@ underneath it. In2.Cu and B.Cu carry the rest of the routing with ground
 poured around them.
 
 ### The ESP32 antenna keepout
-KiCad's `ESP32-S3-WROOM-1` footprint carries a 48 × 21 mm copper keepout
+KiCad's `ESP32-WROOM-32E-N16R2` footprint carries a 48 × 21 mm copper keepout
 zone for the antenna, applied to every layer, plus a courtyard outline of
 the same shape. Both are far more conservative than the module datasheet
 needs and they make placement on an 80 × 54 board impossible.
@@ -172,3 +172,35 @@ pocket that grips the actuator and thumb grooves on top, poking through a
    wasn't a free choice.
 5. **QFN parts.** The amp and the fuel gauge both need reflow or a hot
    plate. This board wants to be assembled, not hand-built.
+
+
+## Why the MCU changed (Rev A -> Rev B)
+
+Rev A used an ESP32-S3. It cannot do A2DP: the S3 has Bluetooth LE only, no
+BR/EDR. ESP-IDF's own capability header says so —
+
+```
+soc/esp32/include/soc/soc_caps.h    #define SOC_BT_CLASSIC_SUPPORTED (1)
+soc/esp32s3/include/soc/soc_caps.h  #define SOC_BLE_SUPPORTED        (1)   <- only
+```
+
+`CONFIG_BT_CLASSIC_ENABLED` is not even a config symbol for that target. Sending
+audio to Bluetooth headphones is the entire point of this device, so the part
+had to change.
+
+**ESP32-WROOM-32E-N16R2** (ESP32-D0WDR2-V3): Classic BT + BLE, 16 MB flash, and
+2 MB of PSRAM *inside the chip package* — so, unlike a WROVER, it costs only
+GPIO16 rather than GPIO16 and GPIO17.
+
+What that dragged in:
+
+| Change | Why |
+|---|---|
+| CP2102N-A02 USB-UART bridge | the classic ESP32 has no native USB |
+| 22.1k/47.5k divider on the bridge's VBUS pin | datasheet: abs max on that pin is VIO + 2.5 V |
+| 1k pull-up on RSTb to VIO | datasheet value; 10k is not enough |
+| 4.7 uF + 0.1 uF at each bridge power pin | datasheet, per pin, not per chip |
+| Cross-coupled auto-reset pair | Espressif's DevKitC truth table: asserting DTR and RTS together must *not* reset, because opening a serial port does exactly that |
+| microSD moved to SPI | the 4-bit slot puts DAT2 on GPIO12/MTDI, the flash-voltage strap; a card's pull-up there tells the bootloader the flash is 1.8 V and bricks the boot |
+| Battery-sense divider deleted | ADC1 is fully used by the encoder and the input-only buttons, ADC2 stops working with Wi-Fi up, and the BQ27441 reports voltage over I2C anyway |
+| 10k pull-down on GPIO2 | download-mode strap, and a WS2812 data pin is high-Z |

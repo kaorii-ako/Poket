@@ -31,7 +31,8 @@ def modules() -> str:
     so a bundler would be more moving parts than the problem deserves.
     """
     out = []
-    for f in (LIB / "fonts.js", LIB / "oled.js", LIB / "data.js", SRC / "app.js"):
+    for f in (LIB / "fonts.js", LIB / "clock.js", LIB / "oled.js",
+              LIB / "data.js", SRC / "app.js"):
         s = f.read_text()
         s = re.sub(r"^\s*import[^;]+;\s*$", "", s, flags=re.M)   # drop imports
         s = re.sub(r"^export (const|function|class) ", r"\1 ", s, flags=re.M)

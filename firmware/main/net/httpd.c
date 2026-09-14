@@ -3,6 +3,7 @@
 #include "app/app_state.h"
 #include "audio/player.h"
 #include "storage/library.h"
+#include "storage/playlist.h"
 #include "ui/theme.h"
 #include "audio/bt_link.h"
 
@@ -85,6 +86,10 @@ static esp_err_t get_state(httpd_req_t *r) {
     cJSON_AddNumberToObject(now, "batt", s.batt_pct);
     cJSON_AddBoolToObject(now, "charging", s.charging);
     cJSON_AddStringToObject(now, "out", s.out == OUT_BLUETOOTH ? "bt" : "jack");
+    cJSON_AddBoolToObject(now, "shuffle", s.shuffle);
+    cJSON_AddStringToObject(now, "repeat", s.repeat == REPEAT_ONE ? "one"
+                                          : s.repeat == REPEAT_ALL ? "all" : "off");
+    cJSON_AddStringToObject(now, "queue", player_queue_name());
     cJSON_AddStringToObject(now, "state",
         s.play == PLAY_PLAYING ? "playing" : s.play == PLAY_PAUSED ? "paused" : "stopped");
 
@@ -420,6 +425,138 @@ static esp_err_t post_theme_pack(httpd_req_t *r) {
     return ESP_OK;
 }
 
+
+// ---- playlists -----------------------------------------------------------
+// Stored as .m3u on the card, so they survive being read on a laptop.
+
+static esp_err_t get_playlists(httpd_req_t *r) {
+    playlist_scan();
+    cJSON *root = cJSON_CreateObject();
+    cJSON *arr = cJSON_AddArrayToObject(root, "playlists");
+    for (int i = 0; i < playlist_count(); i++) {
+        const playlist_t *pl = playlist_at(i);
+        if (!pl) break;
+        cJSON *o = cJSON_CreateObject();
+        cJSON_AddStringToObject(o, "name", pl->name);
+        cJSON_AddNumberToObject(o, "count", pl->count);
+        cJSON_AddItemToArray(arr, o);
+    }
+    cJSON_AddStringToObject(root, "playing", player_queue_name());
+    return send_json(r, root);
+}
+
+// GET /api/playlist?name=Foo -> the tracks in it, resolved against the library
+static esp_err_t get_playlist(httpd_req_t *r) {
+    char query[160], name[PL_NAME_LEN];
+    if (httpd_req_get_url_query_str(r, query, sizeof query) != ESP_OK ||
+        httpd_query_key_value(query, "name", name, sizeof name) != ESP_OK)
+        return httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "name");
+    url_decode(name);
+    if (!playlist_name_ok(name))
+        return httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "bad name");
+
+    static uint16_t idx[PL_MAX_TRACKS];
+    int n = playlist_load(name, idx, PL_MAX_TRACKS);
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "name", name);
+    cJSON *arr = cJSON_AddArrayToObject(root, "tracks");
+    for (int i = 0; i < n; i++) {
+        const lib_entry_t *e = library_get(idx[i]);
+        if (!e) continue;
+        cJSON *o = cJSON_CreateObject();
+        cJSON_AddNumberToObject(o, "n", idx[i] + 1);
+        cJSON_AddStringToObject(o, "title", e->title);
+        cJSON_AddStringToObject(o, "artist", e->artist);
+        cJSON_AddStringToObject(o, "path", e->path);
+        cJSON_AddNumberToObject(o, "dur", e->duration_s);
+        cJSON_AddNumberToObject(o, "size", e->size / 1048576.0);
+        cJSON_AddItemToArray(arr, o);
+    }
+    return send_json(r, root);
+}
+
+static esp_err_t post_playlist(httpd_req_t *r) {
+    char *body = read_body(r, 1024);
+    if (!body) return httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "body");
+    cJSON *j = cJSON_Parse(body);
+    free(body);
+    if (!j) return httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "json");
+
+    const cJSON *act  = cJSON_GetObjectItem(j, "action");
+    const cJSON *name = cJSON_GetObjectItem(j, "name");
+    const char *a = cJSON_IsString(act) ? act->valuestring : "";
+    const char *nm = cJSON_IsString(name) ? name->valuestring : "";
+    esp_err_t err = ESP_ERR_INVALID_ARG;
+
+    if (!strcmp(a, "create")) {
+        err = playlist_create(nm);
+    } else if (!strcmp(a, "delete")) {
+        err = playlist_delete(nm);
+    } else if (!strcmp(a, "add")) {
+        const cJSON *path = cJSON_GetObjectItem(j, "path");
+        if (cJSON_IsString(path)) err = playlist_add(nm, path->valuestring);
+    } else if (!strcmp(a, "removeAt")) {
+        const cJSON *at = cJSON_GetObjectItem(j, "index");
+        if (cJSON_IsNumber(at)) err = playlist_remove_at(nm, (int)at->valuedouble);
+    } else if (!strcmp(a, "play")) {
+        static uint16_t idx[PL_MAX_TRACKS];
+        int n = playlist_load(nm, idx, PL_MAX_TRACKS);
+        const cJSON *st = cJSON_GetObjectItem(j, "start");
+        if (n <= 0) err = ESP_ERR_NOT_FOUND;
+        else err = player_play_queue(nm, idx, n,
+                                     cJSON_IsNumber(st) ? (int)st->valuedouble : 0);
+    }
+    cJSON_Delete(j);
+    if (err != ESP_OK)
+        return httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, esp_err_to_name(err));
+    httpd_resp_sendstr(r, "{\"ok\":true}");
+    return ESP_OK;
+}
+
+// ---- shuffle / repeat ----------------------------------------------------
+
+static esp_err_t post_mode(httpd_req_t *r) {
+    char *body = read_body(r, 128);
+    if (!body) return httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "body");
+    cJSON *j = cJSON_Parse(body);
+    free(body);
+    if (!j) return httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "json");
+    const cJSON *sh = cJSON_GetObjectItem(j, "shuffle");
+    const cJSON *rp = cJSON_GetObjectItem(j, "repeat");
+    if (cJSON_IsBool(sh)) player_set_shuffle(cJSON_IsTrue(sh));
+    if (cJSON_IsString(rp)) {
+        const char *v = rp->valuestring;
+        player_set_repeat(!strcmp(v, "one") ? REPEAT_ONE
+                        : !strcmp(v, "all") ? REPEAT_ALL : REPEAT_OFF);
+    }
+    cJSON_Delete(j);
+    httpd_resp_sendstr(r, "{\"ok\":true}");
+    return ESP_OK;
+}
+
+// ---- delete a track ------------------------------------------------------
+
+static esp_err_t post_delete(httpd_req_t *r) {
+    char *body = read_body(r, 512);
+    if (!body) return httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "body");
+    cJSON *j = cJSON_Parse(body);
+    free(body);
+    const cJSON *path = j ? cJSON_GetObjectItem(j, "path") : NULL;
+    if (!cJSON_IsString(path)) { cJSON_Delete(j); return httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "path"); }
+    // Only ever delete inside the music folder, whatever the caller says.
+    if (strncmp(path->valuestring, "/sdcard/Music/", 14) != 0 ||
+            strstr(path->valuestring, "..")) {
+        cJSON_Delete(j);
+        return httpd_resp_send_err(r, HTTPD_400_BAD_REQUEST, "outside /Music");
+    }
+    int rc = unlink(path->valuestring);
+    cJSON_Delete(j);
+    if (rc != 0) return httpd_resp_send_err(r, HTTPD_404_NOT_FOUND, "no such track");
+    library_scan();
+    httpd_resp_sendstr(r, "{\"ok\":true}");
+    return ESP_OK;
+}
+
 // ---- wiring -------------------------------------------------------------
 
 static const httpd_uri_t k_routes[] = {
@@ -437,6 +574,11 @@ static const httpd_uri_t k_routes[] = {
     { .uri = "/api/bt/scan",       .method = HTTP_POST, .handler = post_bt_scan },
     { .uri = "/api/bt/connect",    .method = HTTP_POST, .handler = post_bt_connect },
     { .uri = "/api/bt/forget",     .method = HTTP_POST, .handler = post_bt_forget },
+    { .uri = "/api/playlists",     .method = HTTP_GET,  .handler = get_playlists },
+    { .uri = "/api/playlist",      .method = HTTP_GET,  .handler = get_playlist },
+    { .uri = "/api/playlist",      .method = HTTP_POST, .handler = post_playlist },
+    { .uri = "/api/mode",          .method = HTTP_POST, .handler = post_mode },
+    { .uri = "/api/delete",        .method = HTTP_POST, .handler = post_delete },
 };
 
 esp_err_t poket_httpd_start(void) {

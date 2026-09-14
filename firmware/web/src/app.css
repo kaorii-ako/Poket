@@ -204,6 +204,41 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 input[type=range]::-moz-range-thumb{width:13px;height:13px;border:0;background:var(--accent);border-radius:var(--radius)}
 .knobs output{font-family:var(--font-num);font-variant-numeric:tabular-nums;min-width:3ch;text-align:right}
 
+/* ---- playlists + library toolbar --------------------------------------- */
+.libbar,.plbar{display:flex;gap:7px;align-items:center;padding:9px 11px;
+  border-bottom:1px solid var(--line)}
+.plbar{border-bottom:0;border-top:1px solid var(--line)}
+.libbar input,.plbar input{flex:1;min-width:0;font:inherit;font-size:13px;
+  background:transparent;color:var(--ink);border:var(--edge-w) solid var(--line);
+  border-radius:var(--radius);padding:6px 9px}
+.libbar input::placeholder,.plbar input::placeholder{color:var(--ink-3)}
+.libbar input:focus,.plbar input:focus{outline:none;border-color:var(--accent)}
+.libbar .pad{padding:6px 9px;gap:5px}
+.libbar .pad svg{display:block}
+#repeatLbl{font-size:10px}
+.plList{list-style:none;margin:0;padding:0}
+.plList li{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center;
+  padding:9px 11px;border-top:1px solid var(--line);font-size:13.5px;cursor:pointer}
+.plList li:hover{background:var(--sel)}
+.plList li[aria-current]{background:var(--sel)}
+.plList li[aria-current] .pn{color:var(--accent)}
+.plList .pn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plList .pc{color:var(--ink-3);font-family:var(--font-num);font-size:11.5px}
+.plList button{appearance:none;border:0;background:transparent;color:var(--ink-2);
+  box-shadow:0 0 0 var(--edge-w) var(--edge) inset;border-radius:var(--radius);
+  padding:4px 9px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase}
+.plList button:hover{background:var(--surface);color:var(--accent)}
+.plEmpty{padding:14px 11px;color:var(--ink-3);font-size:12.5px;border-top:1px solid var(--line)}
+/* row actions only appear on hover, so the table stays readable */
+.rowacts{display:flex;gap:5px;justify-content:flex-end;opacity:0}
+tbody tr:hover .rowacts,tbody tr:focus-within .rowacts{opacity:1}
+.rowacts button{appearance:none;border:0;background:transparent;color:var(--ink-2);
+  box-shadow:0 0 0 1px var(--line) inset;border-radius:var(--radius);
+  padding:2px 7px;font-size:10.5px;cursor:pointer}
+.rowacts button:hover{color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.rowacts button.del:hover{color:var(--danger);box-shadow:0 0 0 1px var(--danger) inset}
+@media(max-width:560px){.rowacts{opacity:1}}
+
 /* ---- library ---------------------------------------------------------- */
 table{border-collapse:collapse;width:100%;font-size:12.5px}
 th,td{text-align:left;padding:6px 9px;border-bottom:1px solid var(--line)}

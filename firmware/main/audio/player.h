@@ -2,8 +2,14 @@
 #include "esp_err.h"
 #include "app/app_state.h"
 
+#define PLAYER_QUEUE_MAX 256
+
 esp_err_t player_init(void);
 esp_err_t player_play_index(uint16_t idx);     // index into the library
+// Plays a list of library indices - a playlist, or any ad-hoc selection.
+esp_err_t player_play_queue(const char *name, const uint16_t *idx, int n, int start);
+const char *player_queue_name(void);           // "" when playing the library
+uint16_t    player_queue_len(void);
 void      player_toggle(void);
 void      player_stop(void);
 void      player_next(void);

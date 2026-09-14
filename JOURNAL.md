@@ -446,3 +446,44 @@ Two hours of that was me fighting the autorouter instead of fixing placement
 first. Routing is a placement problem.
 
 **Total time spent: 7 hours**
+
+# Sep 14: Playlists, search, and a clock that was lying
+
+Wanted the web app to feel like a real player rather than a file dump, so:
+playlists, search, shuffle/repeat, delete, and a fix for something embarrassing.
+
+**The clock was wrong.** The position counter advanced one second every 25
+animation frames. That assumes a 25 Hz display. On a 60 Hz screen it ran
+**2.4× too fast** — a 4-minute track finished in 100 seconds. Position is time;
+it has to be measured against a clock, not against frames. It now keeps
+"elapsed E as of wall-time T" and interpolates.
+
+Pulled the arithmetic out into `lib/clock.js` so I could test it without a
+browser, which turned out to matter: my first attempt to verify it in headless
+Chrome measured 0.800× and I nearly "fixed" a clock that was already correct.
+Headless virtual time throttles rAF, so the *repaint* lags — I was measuring the
+repaint cadence, not the clock. With a fake time source in node it's exact:
+10 s of wall time, 10 s of clock, pause holds, resume continues, and it never
+runs past the end of the track.
+
+**Playlists are .m3u files** in `/Music/Playlists`. Not a private binary format:
+pull the card out, put it in a laptop, and every other player can read them.
+Create, add, remove, reorder, delete, play.
+
+Hit a wall building it — the link failed with *"region `dram0_0_seg` overflowed
+by 16016 bytes"*. My `playlist_remove_at` held the whole playlist in a static
+`char[256][192]` to rewrite it: **48 kB of DRAM**, on a chip with 520 kB total.
+Rewrote it to stream line-by-line into a temp file and rename. No buffer at all,
+and an interrupted write can't leave a half-truncated playlist.
+
+Gave the player a real queue so a playlist is a first-class thing rather than
+"the library, filtered". Also made **Prev** restart the track if you're more than
+3 seconds in, like every other player does.
+
+Then the unglamorous half: everything downstream of the board was still the
+**old S3 design** — gerbers from Sep 10, schematic image from Sep 9, docs naming
+a part that isn't on the board any more. Regenerated the lot.
+
+![board](images/pcb-3d-top.png)
+
+**Total time spent: 3 hours**

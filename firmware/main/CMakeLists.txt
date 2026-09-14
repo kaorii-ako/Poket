@@ -9,6 +9,7 @@ idf_component_register(
         "drivers/battery.c"
         "storage/sdcard.c"
         "storage/library.c"
+        "storage/playlist.c"
         "storage/id3.c"
         "audio/player.c"
         "audio/sink_i2s.c"

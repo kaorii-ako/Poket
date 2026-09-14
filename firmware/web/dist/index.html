@@ -167,6 +167,38 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 background:var(--accent);margin-top:-5px;border-radius:var(--radius)}
 input[type=range]::-moz-range-thumb{width:13px;height:13px;border:0;background:var(--accent);border-radius:var(--radius)}
 .knobs output{font-family:var(--font-num);font-variant-numeric:tabular-nums;min-width:3ch;text-align:right}
+.libbar,.plbar{display:flex;gap:7px;align-items:center;padding:9px 11px;
+border-bottom:1px solid var(--line)}
+.plbar{border-bottom:0;border-top:1px solid var(--line)}
+.libbar input,.plbar input{flex:1;min-width:0;font:inherit;font-size:13px;
+background:transparent;color:var(--ink);border:var(--edge-w) solid var(--line);
+border-radius:var(--radius);padding:6px 9px}
+.libbar input::placeholder,.plbar input::placeholder{color:var(--ink-3)}
+.libbar input:focus,.plbar input:focus{outline:none;border-color:var(--accent)}
+.libbar .pad{padding:6px 9px;gap:5px}
+.libbar .pad svg{display:block}
+#repeatLbl{font-size:10px}
+.plList{list-style:none;margin:0;padding:0}
+.plList li{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center;
+padding:9px 11px;border-top:1px solid var(--line);font-size:13.5px;cursor:pointer}
+.plList li:hover{background:var(--sel)}
+.plList li[aria-current]{background:var(--sel)}
+.plList li[aria-current] .pn{color:var(--accent)}
+.plList .pn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plList .pc{color:var(--ink-3);font-family:var(--font-num);font-size:11.5px}
+.plList button{appearance:none;border:0;background:transparent;color:var(--ink-2);
+box-shadow:0 0 0 var(--edge-w) var(--edge) inset;border-radius:var(--radius);
+padding:4px 9px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase}
+.plList button:hover{background:var(--surface);color:var(--accent)}
+.plEmpty{padding:14px 11px;color:var(--ink-3);font-size:12.5px;border-top:1px solid var(--line)}
+.rowacts{display:flex;gap:5px;justify-content:flex-end;opacity:0}
+tbody tr:hover .rowacts,tbody tr:focus-within .rowacts{opacity:1}
+.rowacts button{appearance:none;border:0;background:transparent;color:var(--ink-2);
+box-shadow:0 0 0 1px var(--line) inset;border-radius:var(--radius);
+padding:2px 7px;font-size:10.5px;cursor:pointer}
+.rowacts button:hover{color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.rowacts button.del:hover{color:var(--danger);box-shadow:0 0 0 1px var(--danger) inset}
+@media(max-width:560px){.rowacts{opacity:1}}
 table{border-collapse:collapse;width:100%;font-size:12.5px}
 th,td{text-align:left;padding:6px 9px;border-bottom:1px solid var(--line)}
 th{color:var(--ink-2);font-weight:500;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase}
@@ -325,9 +357,33 @@ th,td{padding:7px 8px}
 
       <section class="blk">
         <h2>
-          <span><span class="side-lbl">Side A &nbsp;</span><span class="qual">J2 &middot; microSD &middot; </span>/Music</span>
+          <span><span class="side-lbl">Mixtapes &nbsp;</span><span class="qual">J2 &middot; </span>Playlists</span>
+          <span id="plCount"></span>
+        </h2>
+        <div class="plbar">
+          <input type="text" id="plNew" placeholder="New playlist name" maxlength="32"
+                 autocomplete="off">
+          <button class="pad" id="plCreate">Create</button>
+        </div>
+        <ul class="plList" id="plList"></ul>
+      </section>
+
+      <section class="blk">
+        <h2>
+          <span><span class="side-lbl">Side A &nbsp;</span><span class="qual">J2 &middot; microSD &middot; </span><span id="libTitle">/Music</span></span>
           <span id="libCount"></span>
         </h2>
+        <div class="libbar">
+          <input type="search" id="search" placeholder="Search title or artist"
+                 autocomplete="off" spellcheck="false">
+          <button class="pad" id="bShuffle" aria-pressed="false" title="Shuffle">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M17 3l4 4-4 4V8h-2.6l-2.2 3-1.2-1.7L13.2 6H17V3zM3 6h4.2l6 8.5H17V12l4 4-4 4v-3h-5.2L5.8 8H3V6zm0 10h4.2l1.6-2.3 1.2 1.7L8 18H3v-2z"/></svg>
+          </button>
+          <button class="pad" id="bRepeat" data-mode="off" title="Repeat">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+            <span id="repeatLbl">Off</span>
+          </button>
+        </div>
         <div class="libwrap">
           <table>
             <thead><tr>
@@ -429,6 +485,49 @@ const font_bold_10 = {h:9,sp:1,g:{32:[3,[0,0,0,0,0,0,0,0,0]],33:[1,[128,128,128,
 const font_mono_12 = {h:12,sp:0,g:{32:[4,[0,0,0,0,0,0,0,0,0,0,0,0]],33:[2,[0,128,128,128,128,128,128,128,192,0,0,0]],34:[5,[88,216,88,88,0,0,0,0,0,0,0,0]],35:[7,[0,36,36,126,44,40,254,72,72,0,0,0]],36:[6,[32,248,248,224,240,56,172,236,248,32,0,0]],37:[7,[0,230,164,168,248,30,42,74,78,0,0,0]],38:[7,[0,56,108,40,48,116,220,204,126,0,0,0]],39:[1,[128,128,128,128,0,0,0,0,0,0,0,0]],40:[3,[32,96,64,192,192,192,192,192,192,64,96,32]],41:[3,[192,192,96,96,96,96,96,96,96,96,192,128]],42:[4,[64,64,240,224,160,0,0,0,0,0,0,0]],43:[5,[0,0,32,32,248,248,32,32,0,0,0,0]],44:[2,[0,0,0,0,0,0,0,192,192,128,128,0]],45:[3,[0,0,0,0,0,224,224,0,0,0,0,0]],46:[2,[0,0,0,0,0,0,0,128,192,0,0,0]],47:[5,[8,8,24,16,32,96,64,192,128,0,0,0]],48:[6,[0,112,216,200,172,172,200,216,112,0,0,0]],49:[6,[0,48,240,176,48,48,48,48,252,0,0,0]],50:[6,[0,120,216,8,24,48,96,192,252,0,0,0]],51:[6,[0,120,216,8,56,56,12,220,248,0,0,0]],52:[7,[0,12,28,60,108,76,254,12,12,0,0,0]],53:[6,[0,248,192,192,248,220,12,216,248,0,0,0]],54:[6,[0,120,216,192,248,216,204,216,120,0,0,0]],55:[5,[0,248,248,24,48,48,96,96,96,0,0,0]],56:[6,[0,120,216,200,120,248,140,220,248,0,0,0]],57:[6,[0,112,216,136,220,252,8,216,240,0,0,0]],58:[2,[0,0,0,192,128,0,0,128,192,0,0,0]],59:[3,[0,0,0,96,64,0,0,96,64,192,128,0]],60:[6,[0,0,12,120,192,192,120,28,0,0,0,0]],61:[6,[0,0,0,252,0,0,252,0,0,0,0,0]],62:[6,[0,0,192,240,28,28,112,192,0,0,0,0]],63:[6,[0,120,216,140,24,48,32,32,96,0,0,0]],64:[7,[24,100,70,190,170,170,234,188,64,68,56,0]],65:[7,[0,56,56,40,108,108,124,198,198,0,0,0]],66:[6,[0,248,216,200,248,252,204,204,248,0,0,0]],67:[7,[0,60,108,100,192,192,100,110,60,0,0,0]],68:[6,[0,240,248,204,204,204,204,216,240,0,0,0]],69:[6,[0,252,248,192,248,248,192,192,252,0,0,0]],70:[6,[0,252,248,192,192,248,192,192,192,0,0,0]],71:[7,[0,56,108,64,192,222,102,110,60,0,0,0]],72:[5,[0,200,200,200,248,248,200,200,200,0,0,0]],73:[5,[0,248,248,48,48,48,48,112,248,0,0,0]],74:[5,[0,120,56,24,24,24,152,216,240,0,0,0]],75:[6,[0,204,216,240,240,240,216,216,204,0,0,0]],76:[6,[0,192,192,192,192,192,192,192,252,0,0,0]],77:[6,[0,204,220,220,252,188,172,140,140,0,0,0]],78:[5,[0,200,200,232,232,184,184,152,152,0,0,0]],79:[7,[0,60,108,70,198,198,198,108,60,0,0,0]],80:[6,[0,248,252,204,220,248,192,192,192,0,0,0]],81:[7,[0,60,108,70,198,198,198,108,60,24,30,0]],82:[6,[0,248,252,204,220,248,216,216,204,0,0,0]],83:[7,[0,124,108,96,120,28,6,230,124,0,0,0]],84:[7,[0,254,124,24,24,24,24,24,24,0,0,0]],85:[6,[0,200,204,204,204,204,200,216,120,0,0,0]],86:[7,[0,198,198,100,108,108,56,56,56,0,0,0]],87:[7,[0,194,198,214,222,126,108,108,108,0,0,0]],88:[7,[0,70,108,56,56,56,60,108,198,0,0,0]],89:[7,[0,198,100,108,56,56,24,24,24,0,0,0]],90:[7,[0,124,124,12,24,48,96,96,254,0,0,0]],91:[4,[240,192,192,192,192,192,192,192,192,192,240,96]],92:[5,[128,192,64,96,32,48,16,24,8,0,0,0]],93:[3,[224,96,96,96,96,96,96,96,96,96,224,224]],94:[7,[0,56,40,108,68,198,0,0,0,0,0,0]],95:[4,[0,0,0,0,0,0,0,0,0,0,0,0]],96:[3,[192,96,0,0,0,0,0,0,0,0,0,0]],97:[6,[0,0,32,248,152,248,216,216,236,0,0,0]],98:[6,[128,192,208,248,204,204,204,216,248,0,0,0]],99:[5,[0,0,32,248,200,128,192,216,120,0,0,0]],100:[5,[8,8,8,248,216,136,136,216,248,0,0,0]],101:[6,[0,0,32,248,200,252,192,200,120,0,0,0]],102:[6,[60,96,96,248,96,96,96,96,96,0,0,0]],103:[6,[0,0,0,252,204,204,204,220,124,8,248,48]],104:[6,[128,192,208,248,204,204,204,204,204,0,0,0]],105:[6,[48,32,0,240,48,48,48,48,252,0,0,0]],106:[4,[16,16,0,240,48,48,48,48,48,48,240,64]],107:[6,[192,192,192,216,240,240,240,216,204,0,0,0]],108:[6,[240,48,48,48,48,48,48,48,28,0,0,0]],109:[7,[0,0,4,254,214,214,214,214,214,0,0,0]],110:[6,[0,0,16,248,204,204,204,204,204,0,0,0]],111:[7,[0,0,16,124,102,198,70,108,60,0,0,0]],112:[6,[0,0,16,248,204,204,204,216,248,192,192,128]],113:[5,[0,0,0,248,216,136,136,216,248,8,8,8]],114:[5,[0,0,8,248,224,192,192,192,192,0,0,0]],115:[5,[0,0,32,248,192,240,56,136,248,0,0,0]],116:[5,[0,96,96,248,96,96,96,96,120,0,0,0]],117:[5,[0,0,0,200,200,200,200,216,248,0,0,0]],118:[7,[0,0,0,198,100,108,44,56,56,0,0,0]],119:[7,[0,0,0,194,214,222,126,108,108,0,0,0]],120:[6,[0,0,0,216,112,112,112,216,140,0,0,0]],121:[7,[0,0,0,198,100,108,44,56,24,16,112,64]],122:[5,[0,0,0,248,24,48,96,192,248,0,0,0]],123:[5,[56,112,96,96,96,224,224,96,96,96,56,24]],124:[1,[128,128,128,128,128,128,128,128,128,128,128,128]],125:[5,[224,112,48,48,48,24,56,48,48,48,240,192]],126:[6,[0,0,0,0,224,60,0,0,0,0,0,0]]}};
 const font_round_13 = {h:13,sp:1,g:{32:[4,[0,0,0,0,0,0,0,0,0,0,0,0,0]],33:[2,[0,128,128,128,128,128,128,0,128,192,0,0,0]],34:[4,[0,176,176,160,128,0,0,0,0,0,0,0,0]],35:[7,[0,72,72,254,76,72,76,254,72,72,0,0,0]],36:[6,[32,120,192,128,192,120,12,12,12,248,32,0,0]],37:[11,[0,0,113,0,147,0,146,0,150,192,213,96,105,32,11,32,17,96,17,192,0,0,0,0,0,0]],38:[7,[0,56,72,72,120,96,178,158,140,122,0,0,0]],39:[1,[0,128,128,128,128,0,0,0,0,0,0,0,0]],40:[2,[0,64,192,128,128,128,128,128,128,128,64,64,0]],41:[2,[0,128,192,64,64,64,64,64,64,64,128,128,0]],42:[4,[0,32,176,96,240,32,0,0,0,0,0,0,0]],43:[6,[0,0,0,32,32,252,32,32,32,0,0,0,0]],44:[1,[0,0,0,0,0,0,0,0,128,128,128,128,0]],45:[4,[0,0,0,0,0,0,240,0,0,0,0,0,0]],46:[1,[0,0,0,0,0,0,0,0,128,128,0,0,0]],47:[4,[16,16,48,32,32,32,96,64,64,64,192,0,0]],48:[6,[0,120,204,132,132,132,132,132,204,120,0,0,0]],49:[4,[0,48,240,16,16,16,16,16,16,16,0,0,0]],50:[5,[0,240,24,8,8,16,48,96,192,248,0,0,0]],51:[6,[0,240,8,8,24,112,8,12,12,248,0,0,0]],52:[7,[0,12,12,20,36,36,68,254,4,4,0,0,0]],53:[6,[0,248,128,128,224,184,8,12,8,240,0,0,0]],54:[6,[0,124,192,128,176,216,132,132,204,120,0,0,0]],55:[6,[0,252,4,12,8,24,16,16,32,32,0,0,0]],56:[6,[0,120,140,140,200,112,140,132,140,120,0,0,0]],57:[6,[0,120,136,140,140,220,36,12,8,240,0,0,0]],58:[2,[0,0,0,0,192,0,0,0,128,128,0,0,0]],59:[2,[0,0,0,0,192,0,0,0,128,128,128,128,0]],60:[5,[0,0,0,24,48,192,192,48,24,0,0,0,0]],61:[6,[0,0,0,0,252,0,0,252,0,0,0,0,0]],62:[5,[0,0,0,192,48,24,24,48,192,0,0,0,0]],63:[5,[0,248,8,8,24,48,32,32,32,32,0,0,0]],64:[11,[0,0,31,128,32,192,64,96,143,32,145,32,145,32,145,32,159,192,64,0,96,0,31,0,0,0]],65:[8,[0,24,24,52,36,38,126,66,67,129,0,0,0]],66:[7,[0,248,140,132,140,252,134,134,132,252,0,0,0]],67:[7,[0,62,64,128,128,128,128,128,64,62,0,0,0]],68:[8,[0,252,134,130,131,131,130,130,134,248,0,0,0]],69:[6,[0,252,128,128,128,248,128,128,128,252,0,0,0]],70:[6,[0,252,128,128,128,248,128,128,128,128,0,0,0]],71:[8,[0,62,64,128,128,142,131,131,67,62,0,0,0]],72:[7,[0,130,130,130,130,254,130,130,130,130,0,0,0]],73:[1,[0,128,128,128,128,128,128,128,128,128,0,0,0]],74:[4,[0,16,16,16,16,16,16,16,16,224,0,0,0]],75:[6,[0,132,136,144,160,224,176,152,140,132,0,0,0]],76:[5,[0,128,128,128,128,128,128,128,128,248,0,0,0]],77:[9,[0,0,192,128,193,128,225,128,162,128,178,128,148,128,140,128,136,128,128,128,0,0,0,0,0,0]],78:[8,[0,195,227,163,147,155,139,135,135,131,0,0,0]],79:[8,[0,60,66,129,129,129,129,129,66,60,0,0,0]],80:[6,[0,248,140,132,132,140,248,128,128,128,0,0,0]],81:[8,[0,60,66,129,129,129,137,135,70,61,0,0,0]],82:[7,[0,248,132,132,132,248,216,136,140,134,0,0,0]],83:[6,[0,120,128,128,192,120,12,12,12,248,0,0,0]],84:[7,[0,254,16,16,16,16,16,16,16,16,0,0,0]],85:[7,[0,130,130,130,130,130,130,130,196,124,0,0,0]],86:[8,[0,195,66,66,102,36,36,56,24,24,0,0,0]],87:[13,[0,0,194,24,71,16,69,16,69,48,105,160,40,160,40,160,56,192,16,64,0,0,0,0,0,0]],88:[7,[0,66,100,44,24,24,56,36,70,194,0,0,0]],89:[7,[0,194,70,36,56,24,16,16,16,16,0,0,0]],90:[8,[0,127,2,4,12,24,16,32,64,255,0,0,0]],91:[3,[224,192,128,128,128,128,128,128,128,128,128,224,0]],92:[3,[0,128,128,128,128,64,64,64,64,32,32,32,0]],93:[2,[192,64,64,64,64,64,64,64,64,64,64,192,0]],94:[6,[0,48,112,88,200,140,0,0,0,0,0,0,0]],95:[6,[0,0,0,0,0,0,0,0,0,0,0,252,0]],96:[1,[0,128,0,0,0,0,0,0,0,0,0,0,0]],97:[5,[0,0,0,0,240,24,120,136,152,248,0,0,0]],98:[6,[128,128,128,128,248,140,132,132,136,248,0,0,0]],99:[4,[0,0,0,0,112,128,128,128,128,112,0,0,0]],100:[5,[8,8,8,8,248,136,136,136,136,120,0,0,0]],101:[5,[0,0,0,0,248,136,248,128,128,120,0,0,0]],102:[3,[96,192,128,192,224,128,128,128,128,128,0,0,0]],103:[5,[0,0,0,0,248,136,136,136,136,120,8,8,112]],104:[5,[128,128,128,128,248,136,136,136,136,136,0,0,0]],105:[1,[0,128,0,0,128,128,128,128,128,128,0,0,0]],106:[2,[0,64,0,0,64,64,64,64,64,64,64,64,128]],107:[5,[128,128,128,128,144,176,224,160,144,136,0,0,0]],108:[2,[128,128,128,128,128,128,128,128,128,192,0,0,0]],109:[10,[0,0,0,0,0,0,0,0,255,128,136,192,136,192,136,192,136,192,136,192,0,0,0,0,0,0]],110:[5,[0,0,0,0,248,136,136,136,136,136,0,0,0]],111:[6,[0,0,0,0,120,140,132,132,136,120,0,0,0]],112:[6,[0,0,0,0,248,140,132,132,136,248,128,128,128]],113:[5,[0,0,0,0,248,136,136,136,136,120,8,8,8]],114:[4,[0,0,0,0,240,128,128,128,128,128,0,0,0]],115:[5,[0,0,0,0,240,128,224,48,24,240,0,0,0]],116:[3,[0,0,128,192,224,128,128,128,192,96,0,0,0]],117:[5,[0,0,0,0,136,136,136,136,136,120,0,0,0]],118:[6,[0,0,0,0,196,72,72,40,48,48,0,0,0]],119:[10,[0,0,0,0,0,0,0,0,204,64,76,128,74,128,114,128,51,128,49,0,0,0,0,0,0,0]],120:[6,[0,0,0,0,72,120,48,48,104,204,0,0,0]],121:[6,[0,0,0,0,196,72,72,40,48,48,48,32,32]],122:[6,[0,0,0,0,120,24,16,32,64,252,0,0,0]],123:[3,[32,64,64,64,64,64,128,64,64,64,64,96,0]],124:[1,[128,128,128,128,128,128,128,128,128,128,128,128,0]],125:[3,[128,192,64,64,64,64,96,64,64,64,64,192,0]],126:[6,[0,0,0,0,0,228,24,0,0,0,0,0,0]]}};
 const font_round_9 = {h:10,sp:1,g:{32:[3,[0,0,0,0,0,0,0,0,0,0]],33:[1,[0,128,128,128,128,128,128,128,0,0]],34:[3,[0,160,160,160,0,0,0,0,0,0]],35:[5,[0,208,248,248,208,248,248,208,0,0]],36:[4,[96,112,128,128,240,16,16,240,96,0]],37:[9,[0,0,228,0,172,0,168,0,255,0,21,128,53,128,39,0,0,0,0,0]],38:[5,[0,112,208,240,224,184,152,248,0,0]],39:[1,[0,128,128,128,0,0,0,0,0,0]],40:[3,[0,96,64,64,192,192,64,64,96,32]],41:[3,[0,192,64,96,96,96,96,64,64,64]],42:[3,[0,64,224,224,64,0,0,0,0,0]],43:[4,[0,0,64,96,240,96,96,0,0,0]],44:[2,[0,0,0,0,0,0,0,64,64,192]],45:[3,[0,0,0,0,0,224,0,0,0,0]],46:[1,[0,0,0,0,0,0,128,128,0,0]],47:[3,[0,32,32,96,96,64,64,192,192,0]],48:[6,[0,56,76,204,204,204,76,120,0,0]],49:[4,[0,48,240,48,48,48,48,48,0,0]],50:[5,[0,112,24,24,24,48,96,248,0,0]],51:[5,[0,112,24,24,56,8,8,248,0,0]],52:[6,[0,24,56,56,88,252,252,24,0,0]],53:[4,[0,240,128,128,240,16,16,240,0,0]],54:[6,[0,56,96,64,248,204,72,120,0,0]],55:[5,[0,248,24,16,48,32,32,96,0,0]],56:[6,[0,120,72,72,120,76,204,120,0,0]],57:[6,[0,120,200,204,124,8,24,112,0,0]],58:[1,[0,0,0,128,128,0,128,128,0,0]],59:[2,[0,0,0,64,64,0,0,64,64,192]],60:[4,[0,0,16,112,192,224,48,16,0,0]],61:[5,[0,0,0,248,0,120,120,0,0,0]],62:[4,[0,0,128,224,48,112,192,0,0,0]],63:[4,[0,240,16,48,32,32,32,96,0,0]],64:[8,[0,62,67,157,165,165,189,146,96,56]],65:[6,[0,48,56,40,104,124,204,196,0,0]],66:[5,[0,240,152,144,248,136,136,240,0,0]],67:[6,[0,60,96,64,192,192,96,60,0,0]],68:[6,[0,240,152,140,140,140,152,240,0,0]],69:[5,[0,248,128,128,240,128,128,248,0,0]],70:[5,[0,248,128,128,240,128,128,128,0,0]],71:[7,[0,60,96,64,206,198,102,60,0,0]],72:[6,[0,140,140,140,252,140,140,140,0,0]],73:[1,[0,128,128,128,128,128,128,128,0,0]],74:[4,[0,48,48,48,48,48,48,224,0,0]],75:[5,[0,152,144,160,224,176,144,152,0,0]],76:[4,[0,128,128,128,128,128,128,240,0,0]],77:[7,[0,134,198,206,170,186,146,130,0,0]],78:[6,[0,196,196,228,180,156,156,140,0,0]],79:[7,[0,60,102,66,194,194,102,60,0,0]],80:[5,[0,240,152,152,152,240,128,128,0,0]],81:[7,[0,60,102,66,194,202,110,62,0,0]],82:[5,[0,240,152,152,240,240,144,152,0,0]],83:[5,[0,120,192,192,120,24,8,248,0,0]],84:[6,[0,252,48,48,48,48,48,48,0,0]],85:[5,[0,136,136,136,136,136,200,240,0,0]],86:[6,[0,196,204,76,104,56,48,48,0,0]],87:[10,[0,0,204,192,204,192,78,128,94,128,115,128,51,0,51,0,0,0,0,0]],88:[6,[0,204,104,48,48,56,72,204,0,0]],89:[6,[0,196,76,120,48,48,48,48,0,0]],90:[6,[0,252,12,24,48,32,96,252,0,0]],91:[2,[0,192,128,128,128,128,128,128,128,192]],92:[3,[0,192,64,64,64,96,32,32,32,0]],93:[3,[0,96,32,32,32,32,32,32,96,224]],94:[4,[0,96,96,240,144,0,0,0,0,0]],95:[5,[0,0,0,0,0,0,0,0,248,248]],96:[1,[0,128,0,0,0,0,0,0,0,0]],97:[5,[0,0,0,112,24,120,216,120,0,0]],98:[4,[0,128,128,240,144,144,144,240,0,0]],99:[4,[0,0,0,112,64,192,192,112,0,0]],100:[5,[0,8,8,120,72,200,200,120,0,0]],101:[5,[0,0,0,112,88,248,64,120,0,0]],102:[4,[32,112,64,240,64,64,64,64,0,0]],103:[5,[0,0,0,120,72,200,200,120,8,120]],104:[4,[0,128,128,240,144,144,144,144,0,0]],105:[1,[0,128,0,128,128,128,128,128,0,0]],106:[2,[0,64,0,64,64,64,64,64,64,128]],107:[4,[0,128,128,176,160,224,160,176,0,0]],108:[2,[0,128,128,128,128,128,128,192,0,0]],109:[7,[0,0,0,254,178,146,146,146,0,0]],110:[4,[0,0,0,240,144,144,144,144,0,0]],111:[5,[0,0,0,120,72,200,200,120,0,0]],112:[4,[0,0,0,240,144,144,144,240,128,128]],113:[5,[0,0,0,120,72,200,200,120,8,8]],114:[3,[0,0,0,224,192,128,128,128,0,0]],115:[4,[0,0,0,112,192,112,16,240,0,0]],116:[4,[0,0,64,224,64,64,64,112,0,0]],117:[4,[0,0,0,144,144,144,144,240,0,0]],118:[5,[0,0,0,200,216,80,112,32,0,0]],119:[8,[0,0,0,217,219,94,118,102,0,0]],120:[5,[0,0,0,216,112,32,112,216,0,0]],121:[5,[0,0,0,200,216,80,112,32,32,96]],122:[5,[0,0,0,240,48,32,96,248,0,0]],123:[3,[0,96,96,96,96,192,96,96,96,32]],124:[1,[0,128,128,128,128,128,128,128,128,128]],125:[3,[0,96,96,96,96,32,96,96,96,192]],126:[4,[0,0,0,0,240,48,0,0,0,0]]}};
+
+/* ---- clock.js ---- */
+// Playback position, kept as "elapsed E as of wall-clock T" and interpolated.
+//
+// The first version counted animation frames - one second every 25 rAF ticks -
+// which assumes a 25 Hz display. At 60 Hz the clock ran 2.4x fast. Position is
+// time, so it is measured against a clock, never against frames.
+//
+// Split out of app.js so the arithmetic can be tested without a browser: under
+// headless virtual time rAF is throttled, so a repaint-based test measures the
+// repaint cadence rather than the clock.
+
+function makeClock(now = () => performance.now()) {
+  let base = 0;          // elapsed seconds at the last stamp
+  let at = now();        // wall time of that stamp
+  let running = false;
+  let duration = 0;
+
+  return {
+    /** Stamp the position. Call on seek, track change, play and pause. */
+    set(elapsed, isRunning = running, dur = duration) {
+      base = Math.max(0, Number(elapsed) || 0);
+      at = now();
+      running = !!isRunning;
+      duration = Math.max(0, Number(dur) || 0);
+    },
+    setRunning(isRunning) {
+      if (!!isRunning === running) return;
+      this.set(this.get(), isRunning);      // freeze where we are, then flip
+    },
+    setDuration(dur) { duration = Math.max(0, Number(dur) || 0); },
+    /** Position in seconds, interpolated. Never runs past the track. */
+    get() {
+      if (!running) return base;
+      const t = base + (now() - at) / 1000;
+      return duration ? Math.min(t, duration) : t;
+    },
+    /** True once the track has played out. */
+    ended() { return duration > 0 && this.get() >= duration - 0.05; },
+    get running() { return running; },
+    get duration() { return duration; },
+  };
+}
 
 /* ---- oled.js ---- */
 // A 128x64 1-bit framebuffer and the six theme renderers, ported from the
@@ -788,6 +887,7 @@ const fmt = s => `${(Math.max(0, s | 0) / 60) | 0}:`
 // wall of dashes.
 
 
+
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 
@@ -815,6 +915,13 @@ const state = {
   bt: { up: false, scanning: false, connected: false, peer: '',
         saved: false, savedName: '', devices: [] },
   btBusy: false,
+  // Playback position is kept as "elapsed E at wall-clock T" and interpolated,
+  // never counted in animation frames. The old code advanced a second every 25
+  // rAF ticks, which at 60 Hz ran the clock 2.4x too fast.
+  playlists: [],
+  openPl: null,          // playlist being viewed, null = whole library
+  plTracks: [],
+  query: '',
 };
 
 /* ---- api ------------------------------------------------------------- */
@@ -1002,7 +1109,12 @@ function paintBt() {
 async function poll() {
   try {
     const s = await api('/api/state');
+    const wasPlaying = state.now.state;
     Object.assign(state.now, s.now || {});
+    // The device reports once a second; snapping the clock to every reply would
+    // make the readout stutter. Only resync on real drift or a state change.
+    if (Math.abs(state.now.elapsed - elapsedNow()) > 1.2 || state.now.state !== wasPlaying)
+      setClock(state.now.elapsed);
     Object.assign(state.device, s.device || {});
     if (s.theme && THEMES[s.theme] && s.theme !== state.theme) selectTheme(s.theme, false);
     setOnline(true);
@@ -1022,15 +1134,38 @@ async function loadLibrary() {
 }
 
 /* ---- chrome ----------------------------------------------------------- */
+// ---- transport clock ------------------------------------------------------
+// The arithmetic lives in lib/clock.js so it can be unit-tested without a
+// browser; see lib/clock.test.mjs.
+const clock = makeClock();
+function setClock(elapsed) {
+  clock.set(elapsed, state.now.state === 'playing', state.now.duration);
+}
+function elapsedNow() { return clock.get(); }
+
+// Called every frame: the bar moves smoothly, the readout only when the whole
+// second changes, so the text is not repainted 60 times a second.
+let lastShownSecond = -1;
+function paintClock() {
+  const n = state.now;
+  const e = elapsedNow();
+  const pct = n.duration ? Math.min(100, e / n.duration * 100) : 0;
+  $('#trackFill').style.width = pct.toFixed(2) + '%';
+  const sec = Math.floor(e);
+  if (sec !== lastShownSecond) {
+    lastShownSecond = sec;
+    $('#npElapsed').textContent = fmt(sec);
+    $('#track').setAttribute('aria-valuenow', Math.round(pct));
+  }
+  // offline the track has to roll over by itself
+  if (!state.online && clock.ended()) localStep(1);
+}
+
 function paintChrome() {
   const n = state.now, d = state.device;
   $('#npTitle').textContent = n.title || 'Nothing queued';
   $('#npArtist').textContent = n.artist || '';
-  $('#npElapsed').textContent = fmt(n.elapsed);
   $('#npDur').textContent = fmt(n.duration);
-  const pct = n.duration ? Math.min(100, n.elapsed / n.duration * 100) : 0;
-  $('#trackFill').style.width = pct + '%';
-  $('#track').setAttribute('aria-valuenow', Math.round(pct));
   $('#stateTxt').textContent = (n.state || 'stopped').toUpperCase();
   $('#ppLbl').textContent = n.state === 'playing' ? 'Pause' : 'Play';
   $('[data-toggle=out]').setAttribute('aria-pressed', String(n.out === 'bt'));
@@ -1049,24 +1184,88 @@ function paintChrome() {
   $('#volOut').value = n.volume ?? 60;
 }
 
+function visibleTracks() {
+  const src = state.openPl ? state.plTracks : state.tracks;
+  const q = state.query.trim().toLowerCase();
+  if (!q) return src;
+  return src.filter(t => (t.title + ' ' + (t.artist || '')).toLowerCase().includes(q));
+}
+
 function paintLibrary() {
-  const t = state.tracks;
-  $('#libCount').textContent = t.length ? `${t.length} items` : '';
-  // a half-visible row at the fold reads as a clipping bug; fade it instead
-  requestAnimationFrame(() => {
-    const w = $('.libwrap');
-    w.toggleAttribute('data-more', w.scrollHeight > w.clientHeight + 2);
-  });
-  $('#rows').innerHTML = t.length ? t.map((x, i) => `<tr data-i="${i}" ${
-      x.title === state.now.title ? 'data-playing' : ''}>
+  const all = state.openPl ? state.plTracks : state.tracks;
+  const t = visibleTracks();
+  $('#libTitle').textContent = state.openPl ? state.openPl : '/Music';
+  $('#libCount').textContent = state.query && t.length !== all.length
+    ? `${t.length} of ${all.length}` : (all.length ? `${all.length} items` : '');
+
+  $('#rows').innerHTML = t.length ? t.map((x) => {
+    const i = all.indexOf(x);
+    return `<tr data-i="${i}" ${x.title === state.now.title ? 'data-playing' : ''}>
     <td class="num">${String(x.n ?? i + 1).padStart(2, '0')}</td>
     <td>${esc(x.title)}<span class="by">${esc(x.artist || '')}</span></td>
     <td class="num">${fmt(x.dur)}</td>
     <td class="num">${x.kbps ? x.kbps + 'k' : ''}</td>
-    <td class="num">${x.size != null ? (+x.size).toFixed(1) + ' MB' : ''}</td></tr>`).join('')
-    : `<tr><td colspan="5" style="color:var(--ink-3);padding:22px;text-align:center">
-       Card is empty — drop some MP3s below</td></tr>`;
+    <td class="num"><span class="rowacts">${state.openPl
+        ? `<button data-act="plremove" data-i="${i}" title="Remove from this playlist">&minus;</button>`
+        : `<button data-act="plopen" data-i="${i}" title="Add to a playlist">+</button>`}
+      <button class="del" data-act="del" data-i="${i}" title="Delete from the card">\u00d7</button>
+    </span></td></tr>`;
+  }).join('')
+    : `<tr><td colspan="5" style="color:var(--ink-3);padding:22px;text-align:center">${
+        state.query ? 'Nothing matches &ldquo;' + esc(state.query) + '&rdquo;'
+        : state.openPl ? 'This playlist is empty &mdash; add tracks from /Music'
+        : 'Card is empty &mdash; drop some MP3s below'}</td></tr>`;
+
+  requestAnimationFrame(() => {
+    const w = $('.libwrap');
+    w.toggleAttribute('data-more', w.scrollHeight > w.clientHeight + 2);
+  });
 }
+
+// ---- playlists ------------------------------------------------------------
+async function loadPlaylists() {
+  if (state.online) {
+    try { state.playlists = (await api('/api/playlists')).playlists || []; }
+    catch (e) { /* keep what we have */ }
+  }
+  paintPlaylists();
+}
+
+function paintPlaylists() {
+  $('#plCount').textContent = state.playlists.length
+    ? `${state.playlists.length}` : '';
+  const host = $('#plList');
+  host.innerHTML = state.playlists.length ? state.playlists.map(p => `
+    <li data-pl="${esc(p.name)}" ${state.openPl === p.name ? 'aria-current="true"' : ''}>
+      <span class="pn">${esc(p.name)}</span>
+      <span class="pc">${p.count} track${p.count === 1 ? '' : 's'}</span>
+      <button data-plact="play" data-pl="${esc(p.name)}">Play</button>
+      <button data-plact="del"  data-pl="${esc(p.name)}">Delete</button>
+    </li>`).join('')
+    : '<li class="plEmpty">No playlists yet. Name one above and hit Create.</li>';
+}
+
+async function openPlaylist(name) {
+  if (state.openPl === name) { state.openPl = null; state.plTracks = []; }
+  else {
+    state.openPl = name;
+    if (state.online) {
+      try { state.plTracks = (await api('/api/playlist?name=' + encodeURIComponent(name))).tracks || []; }
+      catch (e) { state.plTracks = []; }
+    } else {
+      const pl = state.playlists.find(p => p.name === name);
+      state.plTracks = (pl && pl.tracks) || [];
+    }
+  }
+  paintPlaylists(); paintLibrary();
+}
+
+async function plAction(action, body) {
+  if (!state.online) return true;                 // demo mode mutates locally
+  try { await post('/api/playlist', { action, ...body }); return true; }
+  catch (e) { btNote('Playlist: ' + e.message, true); return false; }
+}
+
 const esc = s => String(s ?? '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
 
 /* ---- skins ------------------------------------------------------------ */
@@ -1136,8 +1335,10 @@ function setZoom(v, persist = true) {
 }
 function frame() {
   state.tick++;
-  if (!state.online && state.now.state === 'playing' && !state.seeking && state.tick % 25 === 0)
-    state.now.elapsed = (state.now.elapsed + 1) % (state.now.duration || 1);
+  if (!state.seeking) {
+    state.now.elapsed = elapsedNow();     // the OLED preview draws from this
+    paintClock();
+  }
   const cs = getComputedStyle(document.documentElement);
   render($('#screen'), state.theme, state.now, state.tick, {
     scale: state.scale,
@@ -1145,7 +1346,6 @@ function frame() {
     off: cs.getPropertyValue('--screen-off').trim() || '#04110c',
     grid: false,
   });
-  if (!state.online && state.tick % 25 === 0) paintChrome();
   requestAnimationFrame(frame);
 }
 
@@ -1156,6 +1356,7 @@ function localStep(d) {
   if (!t) return;
   Object.assign(state.now, { title: t.title, artist: t.artist, duration: t.dur,
                              bitrate: t.kbps, elapsed: 0, pos: t.n });
+  setClock(0);
   paintChrome(); paintLibrary();
 }
 function wireTransport() {
@@ -1196,7 +1397,8 @@ function wireTransport() {
     const r = track.getBoundingClientRect();
     const f = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
     state.now.elapsed = Math.round(f * state.now.duration);
-    paintChrome();
+    setClock(state.now.elapsed);
+    paintClock();
     send('/api/transport', { action: 'seek', value: state.now.elapsed });
   };
   track.addEventListener('pointerdown', e => { state.seeking = true; seekTo(e.clientX); });
@@ -1206,19 +1408,127 @@ function wireTransport() {
     const d = e.key === 'ArrowRight' ? 5 : e.key === 'ArrowLeft' ? -5 : 0;
     if (!d) return;
     e.preventDefault();
-    state.now.elapsed = Math.max(0, Math.min(state.now.duration, state.now.elapsed + d));
-    paintChrome();
+    state.now.elapsed = Math.max(0, Math.min(state.now.duration, elapsedNow() + d));
+    setClock(state.now.elapsed);
+    paintClock();
     send('/api/transport', { action: 'seek', value: state.now.elapsed });
   });
 
-  $('#rows').addEventListener('click', e => {
+  $('#rows').addEventListener('click', async e => {
+    const act = e.target.closest('button[data-act]');
+    if (act) {
+      e.stopPropagation();
+      const i = +act.dataset.i;
+      const src = state.openPl ? state.plTracks : state.tracks;
+      const t = src[i];
+      if (!t) return;
+      if (act.dataset.act === 'del') {
+        if (!confirm(`Delete "${t.title}" from the card? This cannot be undone.`)) return;
+        if (state.online) {
+          try { await post('/api/delete', { path: t.path }); } catch (err) { btNote(err.message, true); return; }
+          await loadLibrary();
+        } else {
+          state.tracks = state.tracks.filter(x => x !== t);
+        }
+        paintLibrary();
+      } else if (act.dataset.act === 'plopen') {
+        if (!state.playlists.length) { btNote('Create a playlist first.', true); return; }
+        const name = prompt('Add to which playlist?\n\n' +
+                            state.playlists.map(p => '\u2022 ' + p.name).join('\n'),
+                            state.playlists[0].name);
+        if (!name) return;
+        if (await plAction('add', { name, path: t.path || t.title })) {
+          const pl = state.playlists.find(p => p.name === name);
+          if (pl) { pl.count++; (pl.tracks = pl.tracks || []).push(t); }
+          paintPlaylists();
+          if (state.openPl === name) openPlaylist(name), openPlaylist(name);
+        }
+      } else if (act.dataset.act === 'plremove') {
+        if (await plAction('removeAt', { name: state.openPl, index: i })) {
+          state.plTracks.splice(i, 1);
+          const pl = state.playlists.find(p => p.name === state.openPl);
+          if (pl) pl.count = state.plTracks.length;
+          paintPlaylists(); paintLibrary();
+        }
+      }
+      return;
+    }
     const tr = e.target.closest('tr[data-i]');
     if (!tr) return;
-    const t = state.tracks[+tr.dataset.i];
+    const src = state.openPl ? state.plTracks : state.tracks;
+    const t = src[+tr.dataset.i];
+    if (!t) return;
     Object.assign(state.now, { title: t.title, artist: t.artist, duration: t.dur,
                                bitrate: t.kbps, elapsed: 0, state: 'playing', pos: t.n });
+    setClock(0);
     paintChrome(); paintLibrary();
-    send('/api/transport', { action: 'play', path: t.path || t.title });
+    if (state.openPl) {
+      send('/api/playlist', { action: 'play', name: state.openPl, start: +tr.dataset.i });
+    } else {
+      send('/api/transport', { action: 'play', path: t.path || t.title });
+    }
+  });
+
+  // search
+  $('#search').addEventListener('input', e => {
+    state.query = e.target.value;
+    paintLibrary();
+  });
+
+  // shuffle / repeat
+  $('#bShuffle').onclick = () => {
+    state.now.shuffle = !state.now.shuffle;
+    $('#bShuffle').setAttribute('aria-pressed', String(state.now.shuffle));
+    send('/api/mode', { shuffle: state.now.shuffle });
+  };
+  const REPEATS = ['off', 'all', 'one'];
+  $('#bRepeat').onclick = () => {
+    const next = REPEATS[(REPEATS.indexOf(state.now.repeat || 'off') + 1) % 3];
+    state.now.repeat = next;
+    $('#bRepeat').dataset.mode = next;
+    $('#bRepeat').setAttribute('aria-pressed', String(next !== 'off'));
+    $('#repeatLbl').textContent = next === 'one' ? 'One' : next === 'all' ? 'All' : 'Off';
+    send('/api/mode', { repeat: next });
+  };
+
+  // playlists
+  $('#plCreate').onclick = async () => {
+    const name = $('#plNew').value.trim();
+    if (!name) return;
+    if (state.playlists.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+      btNote('A playlist called that already exists.', true); return;
+    }
+    if (await plAction('create', { name })) {
+      state.playlists.push({ name, count: 0, tracks: [] });
+      $('#plNew').value = '';
+      paintPlaylists();
+    }
+  };
+  $('#plNew').addEventListener('keydown', e => { if (e.key === 'Enter') $('#plCreate').click(); });
+  $('#plList').addEventListener('click', async e => {
+    const btn = e.target.closest('button[data-plact]');
+    const name = (btn || e.target.closest('li[data-pl]'))?.dataset.pl;
+    if (!name) return;
+    if (!btn) return openPlaylist(name);
+    if (btn.dataset.plact === 'play') {
+      if (await plAction('play', { name, start: 0 })) {
+        const pl = state.playlists.find(p => p.name === name);
+        const first = (pl && pl.tracks && pl.tracks[0]) || null;
+        if (first) {
+          Object.assign(state.now, { title: first.title, artist: first.artist,
+                                     duration: first.dur, elapsed: 0, state: 'playing' });
+          setClock(0); paintChrome(); paintLibrary();
+        }
+        btNote(`Playing "${name}".`);
+      }
+    } else if (btn.dataset.plact === 'del') {
+      if (!confirm(`Delete the playlist "${name}"? The tracks stay on the card.`)) return;
+      if (await plAction('delete', { name })) {
+        state.playlists = state.playlists.filter(p => p.name !== name);
+        if (state.openPl === name) { state.openPl = null; state.plTracks = []; }
+        paintPlaylists(); paintLibrary();
+      }
+    }
   });
 }
 
@@ -1305,8 +1615,9 @@ function boot() {
   $('#zOut').onclick = () => setZoom(state.scale - 1);
   addEventListener('resize', () => setZoom(state.wantScale, false));
 
+  setClock(state.now.elapsed);
   paintChrome(); paintLibrary(); paintBt();
-  poll(); loadLibrary(); btRefresh();
+  poll(); loadLibrary(); btRefresh(); loadPlaylists();
   setInterval(poll, 1000);
   frame();
 }

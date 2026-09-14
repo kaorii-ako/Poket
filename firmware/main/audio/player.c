@@ -6,6 +6,7 @@
 #include "audio/player.h"
 #include "audio/sink.h"
 #include "storage/library.h"
+#include "storage/playlist.h"
 #include "board.h"
 #include <string.h>
 #include <stdlib.h>
@@ -42,6 +43,13 @@ typedef struct {
     bool            shuffle;
     audio_out_t     out;
     bool            want_next, want_prev, want_stop;
+    // The queue is a list of library indices. Playing the whole library is
+    // just the degenerate case where the queue is empty and we walk the
+    // library directly, so a playlist needs no special path through the
+    // decoder.
+    uint16_t        queue[PLAYER_QUEUE_MAX];
+    uint16_t        queue_len, queue_pos;
+    char            queue_name[PL_NAME_LEN];
     uint32_t        seek_to;
     bool            want_seek;
     SemaphoreHandle_t lock;
@@ -73,15 +81,39 @@ static bool open_track(uint16_t idx) {
     return true;
 }
 
-static uint16_t pick_next(void) {
+// step = +1 for next, -1 for previous
+static uint16_t pick_step(int step) {
+    if (P.repeat == REPEAT_ONE) return P.index;
+
+    if (P.queue_len) {                          // playing a playlist
+        if (P.shuffle) {
+            uint16_t k = (uint16_t)(esp_random() % P.queue_len);
+            P.queue_pos = k;
+            return P.queue[k];
+        }
+        int nx = (int)P.queue_pos + step;
+        if (nx < 0) nx = (P.repeat == REPEAT_ALL) ? P.queue_len - 1 : 0;
+        if (nx >= P.queue_len) {
+            if (P.repeat != REPEAT_ALL) return P.index;
+            nx = 0;
+        }
+        P.queue_pos = (uint16_t)nx;
+        return P.queue[nx];
+    }
+
     uint16_t n = library_count();
     if (n == 0) return 0;
-    if (P.repeat == REPEAT_ONE) return P.index;
     if (P.shuffle) return (uint16_t)(esp_random() % n);
-    uint16_t nx = P.index + 1;
-    if (nx >= n) return (P.repeat == REPEAT_ALL) ? 0 : P.index;
-    return nx;
+    int nx = (int)P.index + step;
+    if (nx < 0) nx = (P.repeat == REPEAT_ALL) ? n - 1 : 0;
+    if (nx >= n) {
+        if (P.repeat != REPEAT_ALL) return P.index;
+        nx = 0;
+    }
+    return (uint16_t)nx;
 }
+
+static uint16_t pick_next(void) { return pick_step(+1); }
 
 static void player_task(void *arg) {
     (void)arg;
@@ -102,7 +134,9 @@ static void player_task(void *arg) {
         }
         if (P.want_prev) {
             P.want_prev = false;
-            open_track(P.index ? P.index - 1 : 0);
+            // Restart the track first, the way every other player does; only
+            // step back if we are already near the start.
+            open_track(P.elapsed_ms > 3000 ? P.index : pick_step(-1));
             continue;
         }
         if (P.want_seek) {
@@ -175,11 +209,29 @@ esp_err_t player_init(void) {
 }
 
 esp_err_t player_play_index(uint16_t idx) {
+    P.queue_len = 0;                 // an explicit pick leaves the playlist
+    P.queue_name[0] = 0;
     if (!open_track(idx)) return ESP_FAIL;
     P.state = PLAY_PLAYING;
     open_sink();
     return ESP_OK;
 }
+
+esp_err_t player_play_queue(const char *name, const uint16_t *idx, int n, int start) {
+    if (!idx || n <= 0) return ESP_ERR_INVALID_ARG;
+    if (n > PLAYER_QUEUE_MAX) n = PLAYER_QUEUE_MAX;
+    memcpy(P.queue, idx, (size_t)n * sizeof(uint16_t));
+    P.queue_len = (uint16_t)n;
+    P.queue_pos = (uint16_t)((start >= 0 && start < n) ? start : 0);
+    snprintf(P.queue_name, sizeof P.queue_name, "%s", name ? name : "");
+    if (!open_track(P.queue[P.queue_pos])) return ESP_FAIL;
+    P.state = PLAY_PLAYING;
+    open_sink();
+    return ESP_OK;
+}
+
+const char *player_queue_name(void) { return P.queue_name; }
+uint16_t    player_queue_len(void)  { return P.queue_len; }
 void player_toggle(void) {
     if (P.state == PLAY_PLAYING) P.state = PLAY_PAUSED;
     else if (P.state == PLAY_PAUSED) P.state = PLAY_PLAYING;
@@ -212,7 +264,7 @@ void player_publish(app_state_t *s) {
     s->shuffle = P.shuffle;
     s->out = P.out;
     s->elapsed_s = P.elapsed_ms / 1000;
-    s->queue_pos = P.index;
+    s->queue_pos = P.queue_len ? (uint16_t)(P.queue_pos + 1) : (uint16_t)(P.index + 1);
     s->queue_len = library_count();
     s->jack_present = gpio_get_level(PIN_JACK_DET) == 0;
     s->bt_connected = (P.out == OUT_BLUETOOTH) && a2dp_connected();
