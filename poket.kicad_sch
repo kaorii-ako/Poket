@@ -19063,7 +19063,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "edc66eff-de64-4aec-8981-4caf24e39f03")
     (property "Reference" "U8"
-      (at 181.61 237.49 0)
+      (at 181.61 241.30 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19073,7 +19073,7 @@
     			)
     )
     (property "Value" "CP2102N-A02-GQFN24"
-      (at 204.47 237.49 0)
+      (at 205.74 241.30 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19153,7 +19153,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "48ca4e10-8041-458c-bcc4-b79848fafeb2")
     (property "Reference" "C32"
-      (at 215.265 189.23 0)
+      (at 217.53 185.49 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19164,7 +19164,7 @@
 				)
     )
     (property "Value" "4.7uF"
-      (at 215.265 184.15 0)
+      (at 217.53 188.19 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19222,7 +19222,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "f2346e43-87f9-4b28-b930-16b9667ba009")
     (property "Reference" "C33"
-      (at 227.965 189.23 0)
+      (at 230.23 185.49 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19233,7 +19233,7 @@
 				)
     )
     (property "Value" "100nF"
-      (at 227.965 184.15 0)
+      (at 230.23 188.19 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19291,7 +19291,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "2e517c2a-e0c2-4cdf-ab63-a7914dc5a831")
     (property "Reference" "C34"
-      (at 240.665 189.23 0)
+      (at 242.93 185.49 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19302,7 +19302,7 @@
 				)
     )
     (property "Value" "100nF"
-      (at 240.665 184.15 0)
+      (at 242.93 188.19 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19360,7 +19360,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "e0a38f87-5c29-4820-a44d-b9fbfad05072")
     (property "Reference" "R31"
-      (at 169.672 187.96 90)
+      (at 170.54 186.76 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19370,7 +19370,7 @@
 				)
     )
     (property "Value" "1k"
-      (at 167.64 187.96 90)
+      (at 170.54 189.46 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19427,7 +19427,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "12e81387-1ddc-4ace-931f-fb2df5479397")
     (property "Reference" "R32"
-      (at 215.392 190.5 90)
+      (at 216.26 189.30 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19437,7 +19437,7 @@
 				)
     )
     (property "Value" "1k"
-      (at 213.36 190.5 90)
+      (at 216.26 192.00 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19494,7 +19494,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "fa77b3cd-6a63-4be0-ae52-a39760d0e29d")
     (property "Reference" "R33"
-      (at 254.762 186.69 90)
+      (at 255.63 185.49 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19504,7 +19504,7 @@
 				)
     )
     (property "Value" "10k"
-      (at 252.73 186.69 90)
+      (at 255.63 188.19 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19561,7 +19561,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "633e4c02-69ad-4852-81d8-6e8d7a66ed01")
     (property "Reference" "Q2"
-      (at 246.38 215.265 0)
+      (at 244.20 212.16 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19572,7 +19572,7 @@
     			)
     )
     (property "Value" "MMBT3904"
-      (at 246.38 213.36 0)
+      (at 244.20 214.86 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19634,7 +19634,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "8cb4be30-a04e-47bc-bd07-1f1217d401aa")
     (property "Reference" "Q3"
-      (at 274.32 215.265 0)
+      (at 272.14 212.16 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19645,7 +19645,7 @@
     			)
     )
     (property "Value" "MMBT3904"
-      (at 274.32 213.36 0)
+      (at 272.14 214.86 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19707,7 +19707,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "62a403e9-75fe-454d-afb4-ab80e110a62c")
     (property "Reference" "R34"
-      (at 154.432 196.85 90)
+      (at 155.30 195.65 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19717,7 +19717,7 @@
 				)
     )
     (property "Value" "22.1k"
-      (at 152.4 196.85 90)
+      (at 155.30 198.35 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19774,7 +19774,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "46f5c1ba-d389-4cb6-b833-e47cf50e6433")
     (property "Reference" "R35"
-      (at 154.432 210.82 90)
+      (at 155.30 209.62 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19784,7 +19784,7 @@
 				)
     )
     (property "Value" "47.5k"
-      (at 152.4 210.82 90)
+      (at 155.30 212.32 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19841,7 +19841,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "6b3e934a-3296-48e4-982c-3a0e1f4aad2a")
     (property "Reference" "C35"
-      (at 266.065 189.23 0)
+      (at 268.33 185.49 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19852,7 +19852,7 @@
 				)
     )
     (property "Value" "4.7uF"
-      (at 266.065 184.15 0)
+      (at 268.33 188.19 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19910,7 +19910,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "39d9e385-0747-4682-bc2f-c824ad868420")
     (property "Reference" "C36"
-      (at 278.765 189.23 0)
+      (at 281.03 185.49 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19921,7 +19921,7 @@
 				)
     )
     (property "Value" "100nF"
-      (at 278.765 184.15 0)
+      (at 281.03 188.19 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19979,7 +19979,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "5aa67948-adbd-4e24-94e2-f60373af4b54")
     (property "Reference" "R36"
-      (at 228.092 213.36 90)
+      (at 228.96 212.16 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -19989,7 +19989,7 @@
 				)
     )
     (property "Value" "10k"
-      (at 226.06 213.36 90)
+      (at 228.96 214.86 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -20046,7 +20046,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "634ffdf4-9451-483e-ab58-f8a797796937")
     (property "Reference" "R37"
-      (at 256.032 213.36 90)
+      (at 256.90 212.16 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -20056,7 +20056,7 @@
 				)
     )
     (property "Value" "10k"
-      (at 254 213.36 90)
+      (at 256.90 214.86 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -20113,7 +20113,7 @@
     (body_style 1) (exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
     (uuid "d43a5249-6493-4ca9-b127-965339710b43")
     (property "Reference" "R38"
-      (at 811.022 336.55 90)
+      (at 811.89 335.35 0)
       (show_name no)
       (do_not_autoplace no)
       (effects
@@ -20123,7 +20123,7 @@
 				)
     )
     (property "Value" "10k"
-      (at 808.99 336.55 90)
+      (at 811.89 338.05 0)
       (show_name no)
       (do_not_autoplace no)
       (effects

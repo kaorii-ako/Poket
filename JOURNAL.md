@@ -430,6 +430,12 @@ the three input-only buttons, and ADC2 stops working when Wi-Fi is on — exactl
 when the transfer screen wants to draw a battery. The BQ27441 reports voltage
 over I²C anyway.
 
+![usb bridge](images/usb-bridge.png)
+
+The whole block the S3 never needed: CP2102N, the 22.1k/47.5k divider guarding
+its VBUS sense pin, the 1k on RSTb, a bypass pair per power pin, and Q2/Q3
+cross-coupled so opening a serial port doesn't reset the board.
+
 Schematic: ERC **0 errors, 0 warnings**. Verified all 20 firmware pins against
 the netlist export — no mismatches.
 
